@@ -8,6 +8,7 @@ namespace DesktopPet.EditorTools
     public class ModBuilderWindow : EditorWindow
     {
         private string modName = "MyNewMod";
+        private bool isCharacterMod = false;
 
         [MenuItem("DesktopPet/Mod Builder")]
         public static void ShowWindow()
@@ -17,9 +18,10 @@ namespace DesktopPet.EditorTools
 
         private void OnGUI()
         {
-            GUILayout.Label("Build Custom Clothing Mod", EditorStyles.boldLabel);
+            GUILayout.Label("Build Custom Mod (Character or Clothing)", EditorStyles.boldLabel);
             
             modName = EditorGUILayout.TextField("Mod Name", modName);
+            isCharacterMod = EditorGUILayout.Toggle("Is Character Base Model?", isCharacterMod);
 
             GUILayout.Space(10);
             
@@ -51,6 +53,9 @@ namespace DesktopPet.EditorTools
                 Directory.CreateDirectory(modOutputDirectory);
             }
 
+            // Determine bundle name based on type
+            string finalBundleName = isCharacterMod ? $"character_{modName.ToLower()}" : $"clothes_{modName.ToLower()}";
+
             // Assign AssetBundle names to selected objects
             foreach (GameObject obj in selectedObjects)
             {
@@ -61,16 +66,19 @@ namespace DesktopPet.EditorTools
                     continue;
                 }
 
-                ClothingPart part = obj.GetComponent<ClothingPart>();
-                if (part == null)
+                if (!isCharacterMod)
                 {
-                    Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
+                    ClothingPart part = obj.GetComponent<ClothingPart>();
+                    if (part == null)
+                    {
+                        Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
+                    }
                 }
 
                 AssetImporter importer = AssetImporter.GetAtPath(assetPath);
                 if (importer != null)
                 {
-                    importer.assetBundleName = modName;
+                    importer.assetBundleName = finalBundleName;
                 }
             }
 

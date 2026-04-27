@@ -13,6 +13,8 @@ namespace DesktopPet.Data
         public string equippedShoesId = "";
         public string equippedAccessoryId = "";
         
+        public string selectedCharacterBundleName = ""; // The bundle name for the base character model
+        
         public string openAIApiKey = "";
         public float volume = 1.0f;
     }
