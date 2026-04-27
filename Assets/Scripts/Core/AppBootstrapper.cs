@@ -13,6 +13,7 @@ namespace DesktopPet.Core
         public SaveManager saveManager;
         public WardrobeManager wardrobeManager;
         public DressUpManager dressUpManager;
+        public CharacterModLoader characterLoader;
         public UIManager uiManager;
         public AIManager aiManager;
         public DesktopPet.Logic.AlarmManager alarmManager;
@@ -31,6 +32,28 @@ namespace DesktopPet.Core
                 saveManager.LoadData();
             }
             yield return null;
+
+            // 1.5 Load Character Mod if enabled and no character is present in Scene
+            bool isCharacterLoaded = false;
+            if (characterLoader != null)
+            {
+                // If DressUpManager doesn't already have a rootBone, assume we need to load a character from Mod
+                if (dressUpManager != null && dressUpManager.rootBone == null)
+                {
+                    yield return characterLoader.LoadCharacterFromSaveCoroutine(() => isCharacterLoaded = true);
+                }
+                else
+                {
+                    isCharacterLoaded = true;
+                }
+            }
+            else
+            {
+                isCharacterLoaded = true;
+            }
+
+            // Wait for character instantiation and binding
+            yield return new WaitUntil(() => isCharacterLoaded);
 
             // 2. Wait for Wardrobe to finish scanning mods
             bool isWardrobeLoaded = false;

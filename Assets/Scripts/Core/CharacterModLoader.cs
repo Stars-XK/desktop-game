@@ -94,8 +94,6 @@ namespace DesktopPet.Core
 
             // Bind the instantiated character to the existing systems
             BindCharacterToSystems(currentCharacterInstance);
-            
-            Debug.Log($"[CharacterLoader] Successfully instantiated character: {currentCharacterInstance.name}");
         }
 
         private void BindCharacterToSystems(GameObject characterObj)
@@ -153,9 +151,11 @@ namespace DesktopPet.Core
                 AudioSource audioSrc = characterObj.GetComponentInChildren<AudioSource>();
                 if (audioSrc == null) audioSrc = characterObj.AddComponent<AudioSource>();
                 
-                var tts = aiManager.ttsProviderComponent as ITTSProvider;
-                // Currently AIManager uses its own AudioSource, but for lipsync it's better if it's on the character
+                // Set reference
+                aiManager.GetComponent<AudioSource>().clip = audioSrc.clip; // Simplification, AIManager typically uses its own source
             }
+            
+            Debug.Log($"[CharacterLoader] Successfully instantiated character: {currentCharacterInstance.name}");
         }
 
         // Public method for UI to call when switching characters
