@@ -5,7 +5,7 @@ namespace DesktopPet.Animation
     [RequireComponent(typeof(Animator))]
     public class PetAnimatorController : MonoBehaviour
     {
-        [Header("IK Settings")]
+        [Header("IK 头部追踪设置 (IK Settings)")]
         public bool enableHeadIK = true;
         public float ikWeight = 1.0f;
         public Transform targetLookAt;

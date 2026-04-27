@@ -11,12 +11,13 @@ namespace DesktopPet.DressUp
     {
         public static WardrobeManager Instance { get; private set; }
 
+        [Header("系统引用 (System References)")]
         public AssetBundleLoader bundleLoader;
 
         // Categorized clothing prefabs loaded from mods
         public Dictionary<ClothingType, List<ClothingPart>> AvailableClothes { get; private set; } = new Dictionary<ClothingType, List<ClothingPart>>();
 
-        public Action OnWardrobeLoaded;
+        public event Action OnWardrobeLoaded;
 
         private void Awake()
         {
@@ -36,46 +37,53 @@ namespace DesktopPet.DressUp
             }
         }
 
-        private void Start()
+        public void Start()
         {
-            StartCoroutine(ScanAndLoadMods());
+            if (bundleLoader == null) bundleLoader = GetComponent<AssetBundleLoader>();
+            ScanAndLoadMods();
         }
 
-        private IEnumerator ScanAndLoadMods()
+        private void ScanAndLoadMods()
         {
             string modsDir = bundleLoader.GetModsDirectory();
             if (!Directory.Exists(modsDir))
             {
-                Debug.LogWarning("Mods directory does not exist.");
-                yield break;
+                Debug.LogWarning($"[衣橱] 找不到 Mods 文件夹 (Mods directory not found): {modsDir}");
+                OnWardrobeLoaded?.Invoke();
+                return;
             }
 
-            // We assume mod files do not have extensions or use a specific extension like .bundle
-            // For safety, we can just load files that don't have .manifest
             string[] files = Directory.GetFiles(modsDir);
-            
+            int pendingLoads = 0;
+
             foreach (string file in files)
             {
                 if (file.EndsWith(".manifest") || file.EndsWith(".meta")) continue;
 
                 string fileName = Path.GetFileName(file);
-                bool loaded = false;
+                // 仅扫描衣服 bundle
+                if (!fileName.StartsWith("clothes_")) continue;
 
+                pendingLoads++;
                 bundleLoader.LoadModBundle(fileName, (bundle) =>
                 {
                     if (bundle != null)
                     {
                         ProcessLoadedBundle(bundle);
                     }
-                    loaded = true;
+                    pendingLoads--;
+                    if (pendingLoads == 0)
+                    {
+                        Debug.Log("[衣橱] 所有服装 Mod 扫描完毕 (All clothing mods loaded).");
+                        OnWardrobeLoaded?.Invoke();
+                    }
                 });
-
-                // Wait until this specific bundle is loaded before moving to the next
-                yield return new WaitUntil(() => loaded);
             }
 
-            Debug.Log("All mod bundles scanned and loaded.");
-            OnWardrobeLoaded?.Invoke();
+            if (pendingLoads == 0)
+            {
+                OnWardrobeLoaded?.Invoke();
+            }
         }
 
         private void ProcessLoadedBundle(AssetBundle bundle)
@@ -90,9 +98,12 @@ namespace DesktopPet.DressUp
                     {
                         AvailableClothes[part.clothingType] = new List<ClothingPart>();
                     }
-
                     AvailableClothes[part.clothingType].Add(part);
-                    Debug.Log($"Added {part.partName} to wardrobe category {part.clothingType}.");
+                    Debug.Log($"[衣橱] 载入服装 (Loaded clothing): {part.partName} [{part.clothingType}]");
+                }
+                else
+                {
+                    Debug.LogWarning($"[衣橱] Prefab {prefab.name} 缺失 ClothingPart 组件，无法识别为服装。");
                 }
             }
         }

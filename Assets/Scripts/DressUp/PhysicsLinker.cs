@@ -5,9 +5,9 @@ namespace DesktopPet.DressUp
 {
     public class PhysicsLinker : MonoBehaviour
     {
-        [Header("Base Body Colliders")]
-        [Tooltip("List of colliders on the base body (e.g., legs, chest) that should affect clothing physics.")]
-        public List<Collider> bodyColliders = new List<Collider>();
+        [Header("基础素体碰撞体 (Base Body Colliders)")]
+        [Tooltip("基础素体上需要影响衣服物理的碰撞体列表 (例如: 大腿, 胸部)")]
+        public List<Collider> baseBodyColliders = new List<Collider>();
 
         /// <summary>
         /// Links the base body colliders to the newly equipped clothing's physics system.
@@ -17,16 +17,16 @@ namespace DesktopPet.DressUp
         /// <param name="clothingPart">The newly instantiated clothing GameObject</param>
         public void LinkCollidersToClothing(GameObject clothingPart)
         {
-            if (clothingPart == null || bodyColliders.Count == 0) return;
+            if (clothingPart == null || baseBodyColliders.Count == 0) return;
 
             /* 
             // === Example for DynamicBone ===
             DynamicBone[] dynamicBones = clothingPart.GetComponentsInChildren<DynamicBone>(true);
             foreach (var db in dynamicBones)
             {
-                foreach (var col in bodyColliders)
+                foreach (var col in baseBodyColliders)
                 {
-                    // Assuming bodyColliders are DynamicBoneColliders
+                    // Assuming baseBodyColliders are DynamicBoneColliders
                     DynamicBoneCollider dbCol = col.GetComponent<DynamicBoneCollider>();
                     if (dbCol != null && !db.m_Colliders.Contains(dbCol))
                     {
@@ -41,7 +41,7 @@ namespace DesktopPet.DressUp
             foreach (var cloth in cloths)
             {
                 List<CapsuleCollider> clothColliders = new List<CapsuleCollider>();
-                foreach (var col in bodyColliders)
+                foreach (var col in baseBodyColliders)
                 {
                     if (col is CapsuleCollider capCol)
                     {

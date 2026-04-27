@@ -7,10 +7,10 @@ namespace DesktopPet.UI
 {
     public class UIManager : MonoBehaviour
     {
-        [Header("System References")]
-        public AIManager aiManager;
+        [Header("系统引用 (System References)")]
+        public DesktopPet.AI.AIManager aiManager;
 
-        [Header("Chat UI")]
+        [Header("聊天界面 (Chat UI)")]
         public GameObject chatPanel;
         public InputField chatInputField;
         public Button sendButton;
@@ -18,7 +18,7 @@ namespace DesktopPet.UI
         public Text chatHistoryText;
         public ScrollRect chatScrollRect;
 
-        [Header("Settings UI")]
+        [Header("设置界面 (Settings UI)")]
         public GameObject settingsPanel;
         public InputField apiKeyInputField;
         public Button saveSettingsButton;

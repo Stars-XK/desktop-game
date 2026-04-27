@@ -7,7 +7,7 @@ namespace DesktopPet.Logic
 {
     public class AlarmManager : MonoBehaviour
     {
-        [Header("System References")]
+        [Header("系统引用 (System References)")]
         public AIManager aiManager;
         public DesktopPet.UI.UIManager uiManager;
 
@@ -43,17 +43,17 @@ namespace DesktopPet.Logic
                 IsTriggered = false
             };
             activeAlarms.Add(newAlarm);
-            Debug.Log($"Alarm set for '{taskName}' at {newAlarm.TriggerTime}");
+            Debug.Log($"闹钟已设定 (Alarm set): '{taskName}' 于 {newAlarm.TriggerTime}");
         }
 
         private void TriggerAlarm(AlarmTask alarm)
         {
             alarm.IsTriggered = true;
             activeAlarms.Remove(alarm);
-            Debug.Log($"Alarm Triggered: {alarm.TaskName}");
+            Debug.Log($"闹钟触发 (Alarm Triggered): {alarm.TaskName}");
 
             // Tell the AI to notify the user
-            string systemPrompt = $"[SYSTEM EVENT] The timer for '{alarm.TaskName}' just went off. Remind the user about this right now in a caring and natural way. Do not mention that this is a system event.";
+            string systemPrompt = $"[系统事件] 玩家设定的闹钟 '{alarm.TaskName}' 时间到了。请现在用关心和自然的语气提醒玩家。注意：不要说这是系统事件。";
             
             // Note: Since this is an internal prompt, we bypass the normal UI input box
             if (aiManager.llmProviderComponent is ILLMProvider provider)

@@ -5,7 +5,7 @@ namespace DesktopPet.DressUp
 {
     public class DressUpManager : MonoBehaviour
     {
-        [Header("Base Skeleton")]
+        [Header("基础骨架与素体 (Base Skeleton & Body)")]
         public Transform rootBone;
         public SkinnedMeshRenderer baseBodyMesh;
 

@@ -8,12 +8,12 @@ namespace DesktopPet.AI
 {
     public class AzureTTSProvider : MonoBehaviour, ITTSProvider
     {
-        [Header("Azure Configuration")]
-        [Tooltip("e.g., eastus, westus2, etc.")]
+        [Header("Azure 语音配置 (Azure Configuration)")]
+        [Tooltip("例如：eastus, westus2, chinaeast2 等")]
         public string region = "eastus";
         public string subscriptionKey = "";
-        
-        [Header("Voice Settings")]
+
+        [Header("语音设置 (Voice Settings)")]
         public string voiceName = "zh-CN-XiaoxiaoNeural"; // High quality female voice
         public string outputFormat = "riff-24khz-16bit-mono-pcm";
 

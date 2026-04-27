@@ -7,12 +7,12 @@ namespace DesktopPet.CameraSys
 {
     public class PhotoModeManager : MonoBehaviour
     {
-        [Header("Settings")]
+        [Header("拍照设置 (Settings)")]
         public Camera photoCamera;
         public int resolutionMultiplier = 2;
         public string screenshotsFolder = "Screenshots";
         
-        [Header("UI to Hide")]
+        [Header("拍照时隐藏的 UI (UI to Hide)")]
         public GameObject[] uiElementsToHide;
 
         private void Start()
@@ -78,7 +78,7 @@ namespace DesktopPet.CameraSys
             string fullPath = Path.Combine(dirPath, filename);
 
             File.WriteAllBytes(fullPath, bytes);
-            Debug.Log($"Screenshot saved to: {fullPath}");
+            Debug.Log($"照片已保存 (Screenshot saved): {fullPath}");
         }
     }
 }

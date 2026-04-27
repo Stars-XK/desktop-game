@@ -49,11 +49,11 @@ namespace DesktopPet.Data
             {
                 string json = JsonUtility.ToJson(CurrentData, true);
                 File.WriteAllText(savePath, json);
-                Debug.Log($"Data successfully saved to: {savePath}");
+                Debug.Log($"[存档系统] 数据成功保存至 (Data successfully saved to): {savePath}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Failed to save data: {e.Message}");
+                Debug.LogError($"[存档系统] 保存数据失败 (Failed to save data): {e.Message}");
             }
         }
 
@@ -65,17 +65,17 @@ namespace DesktopPet.Data
                 {
                     string json = File.ReadAllText(savePath);
                     CurrentData = JsonUtility.FromJson<PetSaveData>(json);
-                    Debug.Log("Data loaded successfully.");
+                    Debug.Log("[存档系统] 数据加载成功 (Data loaded successfully).");
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Failed to load data: {e.Message}");
+                    Debug.LogError($"[存档系统] 加载数据失败 (Failed to load data): {e.Message}");
                     CurrentData = new PetSaveData();
                 }
             }
             else
             {
-                Debug.Log("No save file found. Creating new save data.");
+                Debug.Log("[存档系统] 未找到存档文件，正在创建新存档 (No save file found. Creating new save data).");
                 CurrentData = new PetSaveData();
                 SaveData(); // Create initial file
             }

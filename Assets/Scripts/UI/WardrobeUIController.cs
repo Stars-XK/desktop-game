@@ -7,22 +7,22 @@ namespace DesktopPet.UI
 {
     public class WardrobeUIController : MonoBehaviour
     {
-        [Header("System References")]
+        [Header("系统引用 (System References)")]
         public WardrobeManager wardrobeManager;
         public DressUpManager dressUpManager;
 
-        [Header("UI References")]
+        [Header("UI 引用 (UI References)")]
         public GameObject wardrobePanel;
         public Transform contentContainer;
         public GameObject clothingButtonPrefab;
         
-        [Header("Category Tabs")]
+        [Header("类别页签 (Category Tabs)")]
         public Button tabHair;
         public Button tabTop;
         public Button tabBottom;
         public Button tabShoes;
         
-        [Header("Character Reload")]
+        [Header("角色重载 (Character Reload)")]
         public Button reloadCharacterButton;
         public CharacterModLoader characterLoader;
 
@@ -60,7 +60,7 @@ namespace DesktopPet.UI
 
         private void InitializeUI()
         {
-            Debug.Log("[WardrobeUI] Wardrobe loaded, initializing UI...");
+            Debug.Log("[衣橱界面] 衣服加载完毕，初始化UI... (Wardrobe loaded, initializing UI...)");
             // Show Top category by default
             ShowCategory(ClothingType.Top);
         }
@@ -75,7 +75,7 @@ namespace DesktopPet.UI
 
             if (!wardrobeManager.AvailableClothes.TryGetValue(category, out List<ClothingPart> parts))
             {
-                Debug.Log($"[WardrobeUI] No clothing found for category: {category}");
+                Debug.Log($"[衣橱界面] 未找到类别: {category} 的服装 (No clothing found for category)");
                 return;
             }
 
@@ -95,7 +95,7 @@ namespace DesktopPet.UI
                 {
                     btn.onClick.AddListener(() => 
                     {
-                        Debug.Log($"[WardrobeUI] Equipping {part.partName}");
+                        Debug.Log($"[衣橱界面] 正在装备: {part.partName} (Equipping {part.partName})");
                         dressUpManager.EquipPart(part.gameObject);
                         
                         var data = DesktopPet.Data.SaveManager.Instance.CurrentData;

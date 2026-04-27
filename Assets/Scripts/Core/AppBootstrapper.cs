@@ -9,7 +9,7 @@ namespace DesktopPet.Core
 {
     public class AppBootstrapper : MonoBehaviour
     {
-        [Header("Managers")]
+        [Header("核心管理器 (Managers)")]
         public SaveManager saveManager;
         public WardrobeManager wardrobeManager;
         public DressUpManager dressUpManager;
@@ -18,12 +18,12 @@ namespace DesktopPet.Core
         public AIManager aiManager;
         public DesktopPet.Logic.AlarmManager alarmManager;
         
-        [Header("Loading UI")]
+        [Header("加载界面 UI (Loading UI)")]
         public GameObject loadingScreen;
 
         private IEnumerator Start()
         {
-            Debug.Log("[Bootstrapper] Application starting...");
+            Debug.Log("[启动引导器] 应用程序启动中... (Application starting...)");
             if (loadingScreen != null) loadingScreen.SetActive(true);
 
             // 1. Ensure SaveData is loaded first
@@ -76,7 +76,7 @@ namespace DesktopPet.Core
             
             // 5. Hide Loading Screen
             if (loadingScreen != null) loadingScreen.SetActive(false);
-            Debug.Log("[Bootstrapper] Application fully initialized.");
+            Debug.Log("[启动引导器] 应用程序初始化完成 (Application fully initialized).");
         }
 
         private void ApplySavedClothes()

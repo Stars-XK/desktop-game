@@ -5,12 +5,12 @@ namespace DesktopPet.AI
     [RequireComponent(typeof(AudioSource))]
     public class AIManager : MonoBehaviour
     {
-        [Header("Providers")]
+        [Header("底层服务提供商 (Providers)")]
         // In a real scenario, these might be set via an interface injector or serialized interface wrapper
         public MonoBehaviour llmProviderComponent;
         public MonoBehaviour ttsProviderComponent;
 
-        [Header("Managers")]
+        [Header("核心管理器 (Managers)")]
         public DesktopPet.UI.UIManager uiManager;
 
         private ILLMProvider llmProvider;

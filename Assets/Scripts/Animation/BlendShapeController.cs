@@ -5,10 +5,10 @@ namespace DesktopPet.Animation
 {
     public class BlendShapeController : MonoBehaviour
     {
-        [Header("References")]
+     [Header("组件引用 (References)")]
         public SkinnedMeshRenderer faceMesh;
-
-        [Header("Settings")]
+        
+        [Header("表情插值参数 (Settings)")]
         public float transitionSpeed = 10f;
         
         [System.Serializable]

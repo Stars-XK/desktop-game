@@ -6,17 +6,17 @@ namespace DesktopPet.Interaction
     [RequireComponent(typeof(Collider))]
     public class InteractionManager : MonoBehaviour
     {
-        [Header("Drag Settings")]
+        [Header("拖拽设置 (Drag Settings)")]
         public bool canDrag = true;
         public float dragSpeed = 10f;
         
-        [Header("Physics & Boundaries")]
+        [Header("物理与边界 (Physics & Boundaries)")]
         public bool enableGravity = true;
         public float gravityMultiplier = 9.8f;
         public float screenBottomOffset = 50f; // Pixels from bottom
         private float currentVelocityY = 0f;
         
-        [Header("Events")]
+        [Header("事件回调 (Events)")]
         public UnityEvent onPettingStarted;
         public UnityEvent onPettingEnded;
 

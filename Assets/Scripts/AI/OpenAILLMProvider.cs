@@ -8,15 +8,15 @@ namespace DesktopPet.AI
 {
     public class OpenAILLMProvider : MonoBehaviour, ILLMProvider
     {
-        [Header("Configuration")]
+        [Header("大语言模型配置 (Configuration)")]
         public string apiUrl = "https://api.openai.com/v1/chat/completions";
         public string apiKey = "";
         public string modelName = "gpt-3.5-turbo";
         
         [TextArea(3, 10)]
-        public string systemPrompt = "You are a desktop pet. Keep your answers short, sweet, and cute. Always start your response with an emotion tag in brackets, like [happy], [sad], [angry], or [neutral].";
+        public string systemPrompt = "你现在是一个生动的3D桌面宠物。你的名字叫小优。你需要用简短、可爱的语言和玩家互动。每次回复请在最开头用中括号带上你的情绪，例如：[happy], [sad], [angry], [idle]。";
 
-        [Header("Memory")]
+        [Header("记忆管理 (Memory)")]
         public int maxHistoryMessages = 10;
         private System.Collections.Generic.List<OpenAIMessage> chatHistory = new System.Collections.Generic.List<OpenAIMessage>();
 
@@ -56,7 +56,7 @@ namespace DesktopPet.AI
         {
             if (string.IsNullOrEmpty(apiKey))
             {
-                onError?.Invoke("OpenAI API Key is not set. Please configure it in the settings.");
+                onError?.Invoke("未设置 OpenAI API Key，请在设置面板中进行配置。");
                 return;
             }
             StartCoroutine(SendRequestCoroutine(message, onSuccess, onError));

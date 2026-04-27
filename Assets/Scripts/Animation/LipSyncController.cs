@@ -5,11 +5,11 @@ namespace DesktopPet.Animation
     [RequireComponent(typeof(AudioSource))]
     public class LipSyncController : MonoBehaviour
     {
-        [Header("References")]
+        [Header("组件引用 (References)")]
         public SkinnedMeshRenderer faceMesh;
         public string mouthOpenShapeName = "Mouth_Open";
 
-        [Header("Settings")]
+        [Header("口型同步参数 (Settings)")]
         public float sensitivity = 100f;
         public float smoothing = 15f;
         public float maxBlendWeight = 100f;

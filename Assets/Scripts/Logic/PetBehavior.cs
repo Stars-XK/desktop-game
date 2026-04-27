@@ -7,11 +7,11 @@ namespace DesktopPet.Logic
     [RequireComponent(typeof(PetAnimatorController))]
     public class PetBehavior : MonoBehaviour
     {
-        [Header("Idle Behavior Settings")]
+        [Header("待机行为设置 (Idle Behavior Settings)")]
         public float minIdleTime = 5f;
         public float maxIdleTime = 15f;
         
-        [Tooltip("List of trigger names in the Animator representing random idle actions (e.g., look_around, stretch)")]
+        [Tooltip("Animator 中的 Trigger 名字列表，用于触发随机待机动作 (例如：look_around, stretch)")]
         public string[] randomIdleAnimations;
 
         private PetAnimatorController animController;

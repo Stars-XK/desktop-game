@@ -29,7 +29,7 @@ namespace DesktopPet.Core
             string modsDir = bundleLoader.GetModsDirectory();
             if (!Directory.Exists(modsDir))
             {
-                Debug.LogWarning("[CharacterLoader] Mods directory not found.");
+                Debug.LogWarning("[角色加载器] 找不到 Mods 文件夹 (Mods directory not found).");
                 onComplete?.Invoke();
                 yield break;
             }
@@ -39,7 +39,7 @@ namespace DesktopPet.Core
 
             if (string.IsNullOrEmpty(targetBundle))
             {
-                Debug.Log("[CharacterLoader] No character bundle found in Mods folder.");
+                Debug.Log("[角色加载器] Mods 文件夹下未发现人物 Bundle (No character bundle found).");
                 onComplete?.Invoke();
                 yield break;
             }
@@ -78,7 +78,7 @@ namespace DesktopPet.Core
             GameObject[] prefabs = bundle.LoadAllAssets<GameObject>();
             if (prefabs.Length == 0)
             {
-                Debug.LogError($"[CharacterLoader] Bundle {bundle.name} contains no GameObjects!");
+                Debug.LogError($"[角色加载器] Bundle {bundle.name} 内不包含任何 GameObject！");
                 return;
             }
 
@@ -155,7 +155,7 @@ namespace DesktopPet.Core
                 aiManager.GetComponent<AudioSource>().clip = audioSrc.clip; // Simplification, AIManager typically uses its own source
             }
             
-            Debug.Log($"[CharacterLoader] Successfully instantiated character: {currentCharacterInstance.name}");
+            Debug.Log($"[角色加载器] 成功实例化人物 (Successfully instantiated character): {currentCharacterInstance.name}");
         }
 
         // Public method for UI to call when switching characters
