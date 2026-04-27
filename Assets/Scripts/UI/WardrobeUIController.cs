@@ -84,7 +84,16 @@ namespace DesktopPet.UI
                         Debug.Log($"[WardrobeUI] Equipping {part.partName}");
                         dressUpManager.EquipPart(part.gameObject);
                         
-                        // TODO: Update SaveManager with the new equipped ID
+                        var data = DesktopPet.Data.SaveManager.Instance.CurrentData;
+                        switch (part.clothingType)
+                        {
+                            case ClothingType.Hair: data.equippedHairId = part.partId; break;
+                            case ClothingType.Top: data.equippedTopId = part.partId; break;
+                            case ClothingType.Bottom: data.equippedBottomId = part.partId; break;
+                            case ClothingType.Shoes: data.equippedShoesId = part.partId; break;
+                            case ClothingType.Accessory: data.equippedAccessoryId = part.partId; break;
+                        }
+                        DesktopPet.Data.SaveManager.Instance.SaveData();
                     });
                 }
             }

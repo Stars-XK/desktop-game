@@ -11,6 +11,7 @@ namespace DesktopPet.DressUp
 
         private Dictionary<string, Transform> boneMap = new Dictionary<string, Transform>();
         private Dictionary<ClothingType, GameObject> equippedParts = new Dictionary<ClothingType, GameObject>();
+        private List<int> currentlyHiddenBlendshapes = new List<int>();
 
         private void Awake()
         {
@@ -64,7 +65,20 @@ namespace DesktopPet.DressUp
                 linker.LinkCollidersToClothing(newPart);
             }
             
-            // TODO: Apply blendshape hiding logic here based on partData.hideBodyBlendshapes
+            // Apply blendshape hiding logic here based on partData.hideBodyBlendshapes
+            if (partData.hideBodyBlendshapes != null && baseBodyMesh != null)
+            {
+                foreach (string shape in partData.hideBodyBlendshapes)
+                {
+                    int index = baseBodyMesh.sharedMesh.GetBlendShapeIndex(shape);
+                    if (index != -1)
+                    {
+                        baseBodyMesh.SetBlendShapeWeight(index, 100f);
+                        if (!currentlyHiddenBlendshapes.Contains(index))
+                            currentlyHiddenBlendshapes.Add(index);
+                    }
+                }
+            }
         }
 
         private void RemapBones(SkinnedMeshRenderer smr)
@@ -93,7 +107,16 @@ namespace DesktopPet.DressUp
             {
                 Destroy(part);
                 equippedParts.Remove(type);
-                // TODO: Restore blendshapes here
+                
+                // Restore blendshapes here
+                if (baseBodyMesh != null)
+                {
+                    foreach (int index in currentlyHiddenBlendshapes)
+                    {
+                        baseBodyMesh.SetBlendShapeWeight(index, 0f);
+                    }
+                    currentlyHiddenBlendshapes.Clear();
+                }
             }
         }
     }
