@@ -8,7 +8,10 @@ namespace DesktopPet.EditorTools
     public class ModBuilderWindow : EditorWindow
     {
         private string modName = "MyNewMod";
+<<<<<<< HEAD
         private bool isCharacterMod = false;
+=======
+>>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
 
         [MenuItem("DesktopPet/Mod Builder")]
         public static void ShowWindow()
@@ -18,10 +21,16 @@ namespace DesktopPet.EditorTools
 
         private void OnGUI()
         {
+<<<<<<< HEAD
             GUILayout.Label("Build Custom Mod (Character or Clothing)", EditorStyles.boldLabel);
             
             modName = EditorGUILayout.TextField("Mod Name", modName);
             isCharacterMod = EditorGUILayout.Toggle("Is Character Base Model?", isCharacterMod);
+=======
+            GUILayout.Label("Build Custom Clothing Mod", EditorStyles.boldLabel);
+            
+            modName = EditorGUILayout.TextField("Mod Name", modName);
+>>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
 
             GUILayout.Space(10);
             
@@ -53,9 +62,12 @@ namespace DesktopPet.EditorTools
                 Directory.CreateDirectory(modOutputDirectory);
             }
 
+<<<<<<< HEAD
             // Determine bundle name based on type
             string finalBundleName = isCharacterMod ? $"character_{modName.ToLower()}" : $"clothes_{modName.ToLower()}";
 
+=======
+>>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
             // Assign AssetBundle names to selected objects
             foreach (GameObject obj in selectedObjects)
             {
@@ -66,6 +78,7 @@ namespace DesktopPet.EditorTools
                     continue;
                 }
 
+<<<<<<< HEAD
                 if (!isCharacterMod)
                 {
                     ClothingPart part = obj.GetComponent<ClothingPart>();
@@ -73,12 +86,22 @@ namespace DesktopPet.EditorTools
                     {
                         Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
                     }
+=======
+                ClothingPart part = obj.GetComponent<ClothingPart>();
+                if (part == null)
+                {
+                    Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
+>>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
                 }
 
                 AssetImporter importer = AssetImporter.GetAtPath(assetPath);
                 if (importer != null)
                 {
+<<<<<<< HEAD
                     importer.assetBundleName = finalBundleName;
+=======
+                    importer.assetBundleName = modName;
+>>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
                 }
             }
 
