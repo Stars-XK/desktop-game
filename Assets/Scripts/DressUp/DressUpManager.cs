@@ -56,6 +56,13 @@ namespace DesktopPet.DressUp
             }
 
             equippedParts[partData.clothingType] = newPart;
+
+            // Apply physics linking if available
+            PhysicsLinker linker = GetComponent<PhysicsLinker>();
+            if (linker != null)
+            {
+                linker.LinkCollidersToClothing(newPart);
+            }
             
             // TODO: Apply blendshape hiding logic here based on partData.hideBodyBlendshapes
         }
