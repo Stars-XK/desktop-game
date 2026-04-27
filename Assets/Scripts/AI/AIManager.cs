@@ -34,7 +34,27 @@ namespace DesktopPet.AI
                 onSuccess: (responseText, emotion) => 
                 {
                     Debug.Log($"Pet [{emotion}]: {responseText}");
-                    // TODO: Trigger animation based on 'emotion'
+                    
+                    // Notify UI to play typewriter effect
+                    var uiManager = FindObjectOfType<DesktopPet.UI.UIManager>();
+                    if (uiManager != null)
+                    {
+                        uiManager.DisplayAIResponse(responseText);
+                    }
+
+                    // Trigger animation based on 'emotion'
+                    var animatorController = GetComponent<DesktopPet.Animation.PetAnimatorController>();
+                    if (animatorController != null)
+                    {
+                        animatorController.PlayEmotion(emotion);
+                    }
+
+                    // Trigger facial blendshape based on 'emotion'
+                    var blendShapeController = GetComponent<DesktopPet.Animation.BlendShapeController>();
+                    if (blendShapeController != null)
+                    {
+                        blendShapeController.SetEmotion(emotion);
+                    }
                     
                     if (ttsProvider != null)
                     {

@@ -14,6 +14,7 @@ namespace DesktopPet.UI
         public GameObject chatPanel;
         public InputField chatInputField;
         public Button sendButton;
+        public TypewriterUI typewriterText;
         public Text chatHistoryText;
         public ScrollRect chatScrollRect;
 
@@ -85,6 +86,15 @@ namespace DesktopPet.UI
                 {
                     chatScrollRect.verticalNormalizedPosition = 0f;
                 }
+            }
+        }
+
+        public void DisplayAIResponse(string message)
+        {
+            AppendToChat($"<color=#A9A9A9>Pet:</color> {message}");
+            if (typewriterText != null)
+            {
+                typewriterText.PlayText(message);
             }
         }
 
