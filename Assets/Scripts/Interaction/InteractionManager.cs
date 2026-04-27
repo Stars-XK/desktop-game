@@ -10,6 +10,12 @@ namespace DesktopPet.Interaction
         public bool canDrag = true;
         public float dragSpeed = 10f;
         
+        [Header("Physics & Boundaries")]
+        public bool enableGravity = true;
+        public float gravityMultiplier = 9.8f;
+        public float screenBottomOffset = 50f; // Pixels from bottom
+        private float currentVelocityY = 0f;
+        
         [Header("Events")]
         public UnityEvent onPettingStarted;
         public UnityEvent onPettingEnded;
@@ -24,6 +30,36 @@ namespace DesktopPet.Interaction
             mainCamera = Camera.main;
         }
 
+        private void Update()
+        {
+            if (!isDragging && enableGravity)
+            {
+                ApplyGravity();
+            }
+        }
+
+        private void ApplyGravity()
+        {
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(transform.position);
+
+            // If we are above the floor (bottom of screen + offset)
+            if (screenPos.y > screenBottomOffset)
+            {
+                currentVelocityY -= gravityMultiplier * Time.deltaTime * 100f; // Scale for screen space
+                screenPos.y += currentVelocityY * Time.deltaTime;
+                
+                // Floor collision
+                if (screenPos.y <= screenBottomOffset)
+                {
+                    screenPos.y = screenBottomOffset;
+                    currentVelocityY = 0f;
+                }
+
+                Vector3 newWorldPos = mainCamera.ScreenToWorldPoint(screenPos);
+                transform.position = newWorldPos;
+            }
+        }
+
         private void OnMouseDown()
         {
             if (!canDrag) return;
@@ -31,6 +67,7 @@ namespace DesktopPet.Interaction
             zCoord = mainCamera.WorldToScreenPoint(gameObject.transform.position).z;
             offset = gameObject.transform.position - GetMouseAsWorldPoint();
             isDragging = true;
+            currentVelocityY = 0f; // Reset gravity speed on pickup
             
             // Trigger petting start if just clicked
             onPettingStarted?.Invoke();
@@ -46,7 +83,15 @@ namespace DesktopPet.Interaction
         {
             if (!canDrag || !isDragging) return;
 
-            transform.position = Vector3.Lerp(transform.position, GetMouseAsWorldPoint() + offset, dragSpeed * Time.deltaTime);
+            Vector3 targetWorldPos = GetMouseAsWorldPoint() + offset;
+            
+            // Screen Boundaries Clamping
+            Vector3 screenPos = mainCamera.WorldToScreenPoint(targetWorldPos);
+            screenPos.x = Mathf.Clamp(screenPos.x, 0, Screen.width);
+            screenPos.y = Mathf.Clamp(screenPos.y, screenBottomOffset, Screen.height);
+            
+            targetWorldPos = mainCamera.ScreenToWorldPoint(screenPos);
+            transform.position = Vector3.Lerp(transform.position, targetWorldPos, dragSpeed * Time.deltaTime);
         }
 
         private Vector3 GetMouseAsWorldPoint()
