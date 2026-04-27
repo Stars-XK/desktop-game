@@ -21,6 +21,10 @@ namespace DesktopPet.UI
         public Button tabTop;
         public Button tabBottom;
         public Button tabShoes;
+        
+        [Header("Character Reload")]
+        public Button reloadCharacterButton;
+        public CharacterModLoader characterLoader;
 
         private void Start()
         {
@@ -34,6 +38,16 @@ namespace DesktopPet.UI
             if (tabTop != null) tabTop.onClick.AddListener(() => ShowCategory(ClothingType.Top));
             if (tabBottom != null) tabBottom.onClick.AddListener(() => ShowCategory(ClothingType.Bottom));
             if (tabShoes != null) tabShoes.onClick.AddListener(() => ShowCategory(ClothingType.Shoes));
+            
+            if (reloadCharacterButton != null && characterLoader != null)
+            {
+                reloadCharacterButton.onClick.AddListener(() =>
+                {
+                    // For now, reload the current character from save (this could be expanded to a list)
+                    var bundleName = DesktopPet.Data.SaveManager.Instance.CurrentData.selectedCharacterBundleName;
+                    characterLoader.SwitchCharacter(bundleName);
+                });
+            }
         }
 
         private void OnDestroy()
