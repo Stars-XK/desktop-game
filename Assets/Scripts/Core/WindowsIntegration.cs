@@ -104,8 +104,9 @@ namespace DesktopPet.Core
         {
             if (msg == WM_NCHITTEST && hitTestCallback != null)
             {
-                int x = (short)((long)lParam & 0xFFFF);
-                int y = (short)(((long)lParam >> 16) & 0xFFFF);
+                long lp = lParam.ToInt64();
+                int x = (short)(lp & 0xFFFF);
+                int y = (short)((lp >> 16) & 0xFFFF);
 
                 if (!GetWindowRect(hwnd, out RECT r)) return CallWindowProc(oldWndProc, hwnd, msg, wParam, lParam);
 
