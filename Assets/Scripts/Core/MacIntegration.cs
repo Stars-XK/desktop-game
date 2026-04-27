@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -10,7 +11,13 @@ namespace DesktopPet.Core
         private static extern void MakeWindowTransparent();
 
         [DllImport("MacWindowPlugin")]
-        private static extern void SetWindowClickThrough(bool clickThrough);
+        private static extern void InstallClickThroughHitTest(IntPtr hitTestCallback);
+
+        [DllImport("MacWindowPlugin")]
+        private static extern void UninstallClickThroughHitTest();
+
+        private HitTestCallback managedCallback;
+        private IntPtr callbackPtr = IntPtr.Zero;
 
         public void InitializeTransparentWindow()
         {
@@ -18,13 +25,23 @@ namespace DesktopPet.Core
             MakeWindowTransparent();
         }
 
-        public void SetClickThrough(bool passthrough)
+        public void RegisterHitTestCallback(HitTestCallback callback)
         {
-            SetWindowClickThrough(passthrough);
+            managedCallback = callback;
+            callbackPtr = Marshal.GetFunctionPointerForDelegate(managedCallback);
+            InstallClickThroughHitTest(callbackPtr);
+        }
+
+        public void Shutdown()
+        {
+            UninstallClickThroughHitTest();
+            callbackPtr = IntPtr.Zero;
+            managedCallback = null;
         }
 #else
         public void InitializeTransparentWindow() { }
-        public void SetClickThrough(bool passthrough) { }
+        public void RegisterHitTestCallback(HitTestCallback callback) { }
+        public void Shutdown() { }
 #endif
     }
 }
