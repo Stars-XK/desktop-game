@@ -16,6 +16,10 @@ namespace DesktopPet.AI
         [TextArea(3, 10)]
         public string systemPrompt = "You are a desktop pet. Keep your answers short, sweet, and cute. Always start your response with an emotion tag in brackets, like [happy], [sad], [angry], or [neutral].";
 
+        [Header("Memory")]
+        public int maxHistoryMessages = 10;
+        private System.Collections.Generic.List<OpenAIMessage> chatHistory = new System.Collections.Generic.List<OpenAIMessage>();
+
         [Serializable]
         private class OpenAIMessage
         {
@@ -42,6 +46,12 @@ namespace DesktopPet.AI
             public OpenAIMessage message;
         }
 
+        private void Start()
+        {
+            // Initialize with system prompt
+            chatHistory.Add(new OpenAIMessage { role = "system", content = systemPrompt });
+        }
+
         public void SendMessageAsync(string message, Action<string, string> onSuccess, Action<string> onError)
         {
             StartCoroutine(SendRequestCoroutine(message, onSuccess, onError));
@@ -49,14 +59,19 @@ namespace DesktopPet.AI
 
         private IEnumerator SendRequestCoroutine(string userMessage, Action<string, string> onSuccess, Action<string> onError)
         {
+            // Add user message to history
+            chatHistory.Add(new OpenAIMessage { role = "user", content = userMessage });
+
+            // Enforce max history length (keep system prompt at index 0)
+            if (chatHistory.Count > maxHistoryMessages + 1)
+            {
+                chatHistory.RemoveAt(1); // Remove oldest non-system message
+            }
+
             var reqData = new OpenAIRequest
             {
                 model = modelName,
-                messages = new[]
-                {
-                    new OpenAIMessage { role = "system", content = systemPrompt },
-                    new OpenAIMessage { role = "user", content = userMessage }
-                }
+                messages = chatHistory.ToArray()
             };
 
             string jsonPayload = JsonUtility.ToJson(reqData);
@@ -83,6 +98,10 @@ namespace DesktopPet.AI
                 if (resData != null && resData.choices != null && resData.choices.Length > 0)
                 {
                     string fullText = resData.choices[0].message.content;
+                    
+                    // Add AI response to history so it remembers what it said
+                    chatHistory.Add(new OpenAIMessage { role = "assistant", content = fullText });
+
                     ExtractEmotion(fullText, out string emotion, out string cleanText);
                     onSuccess?.Invoke(cleanText, emotion);
                 }
