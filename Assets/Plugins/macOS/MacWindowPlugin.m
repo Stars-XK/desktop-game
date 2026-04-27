@@ -71,7 +71,7 @@ void MakeWindowTransparent() {
         [window setStyleMask:NSWindowStyleMaskBorderless];
         [window setLevel:NSFloatingWindowLevel];
         [window setHasShadow:NO];
-        [window setIgnoresMouseEvents:YES];
+        [window setIgnoresMouseEvents:NO];
     }
 }
 
@@ -92,11 +92,18 @@ void InstallClickThroughHitTest(void *hitTestCallback) {
                                  TapCallback,
                                  NULL);
 
-    if (gEventTap == NULL) return;
+    if (gEventTap == NULL) {
+        NSWindow *window = GetUnityMainWindow();
+        if (window != nil) [window setIgnoresMouseEvents:NO];
+        return;
+    }
 
     gRunLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, gEventTap, 0);
     CFRunLoopAddSource(CFRunLoopGetMain(), gRunLoopSource, kCFRunLoopCommonModes);
     CGEventTapEnable(gEventTap, true);
+
+    NSWindow *window = GetUnityMainWindow();
+    if (window != nil) [window setIgnoresMouseEvents:YES];
 }
 
 void UninstallClickThroughHitTest() {
