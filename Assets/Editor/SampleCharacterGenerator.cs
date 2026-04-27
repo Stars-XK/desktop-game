@@ -12,7 +12,7 @@ namespace DesktopPet.EditorTools
         private const string MaterialDir = RootDir + "/Materials";
         private const string PrefabDir = RootDir + "/Prefabs";
 
-        [MenuItem("DesktopPet/Generate Sample Character")]
+        [MenuItem("DesktopPet/生成示例人物与衣服贴图")]
         public static void Generate()
         {
             EnsureDir(RootDir);
@@ -35,14 +35,14 @@ namespace DesktopPet.EditorTools
             string characterPrefabPath = PrefabDir + "/P_SampleCharacter.prefab";
             CreateCharacterPrefab(characterPrefabPath, bodyMat);
 
-            CreateClothingPrefab(PrefabDir + "/C_Hair_Short.prefab", "hair_short_01", ClothingType.Hair, "Short Hair", hairMat, PrimitiveType.Sphere, new Vector3(0f, 1.45f, 0f), new Vector3(0.65f, 0.45f, 0.65f));
-            CreateClothingPrefab(PrefabDir + "/C_Top_Jacket.prefab", "top_jacket_01", ClothingType.Top, "Blue Jacket", topMat, PrimitiveType.Cylinder, new Vector3(0f, 1.05f, 0f), new Vector3(0.72f, 0.55f, 0.72f));
-            CreateClothingPrefab(PrefabDir + "/C_Bottom_Skirt.prefab", "bottom_skirt_01", ClothingType.Bottom, "Dark Skirt", bottomMat, PrimitiveType.Cylinder, new Vector3(0f, 0.55f, 0f), new Vector3(0.78f, 0.45f, 0.78f));
-            CreateShoesPrefab(PrefabDir + "/C_Shoes_Sneakers.prefab", "shoes_sneakers_01", "Sneakers", shoesMat);
+            CreateClothingPrefab(PrefabDir + "/C_Hair_Short.prefab", "hair_short_01", ClothingType.Hair, "短发 (示例)", hairMat, PrimitiveType.Sphere, new Vector3(0f, 1.45f, 0f), new Vector3(0.65f, 0.45f, 0.65f));
+            CreateClothingPrefab(PrefabDir + "/C_Top_Jacket.prefab", "top_jacket_01", ClothingType.Top, "蓝色夹克 (示例)", topMat, PrimitiveType.Cylinder, new Vector3(0f, 1.05f, 0f), new Vector3(0.72f, 0.55f, 0.72f));
+            CreateClothingPrefab(PrefabDir + "/C_Bottom_Skirt.prefab", "bottom_skirt_01", ClothingType.Bottom, "黑色短裙 (示例)", bottomMat, PrimitiveType.Cylinder, new Vector3(0f, 0.55f, 0f), new Vector3(0.78f, 0.45f, 0.78f));
+            CreateShoesPrefab(PrefabDir + "/C_Shoes_Sneakers.prefab", "shoes_sneakers_01", "运动鞋 (示例)", shoesMat);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            EditorUtility.DisplayDialog("DesktopPet", "Sample character + clothing assets generated under Assets/Art/SampleCharacter", "OK");
+            EditorUtility.DisplayDialog("桌面宠物", "示例人物与衣服资源已生成至 Assets/Art/SampleCharacter 目录", "确定");
         }
 
         private static void EnsureDir(string path)

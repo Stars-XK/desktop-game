@@ -8,33 +8,24 @@ namespace DesktopPet.EditorTools
     public class ModBuilderWindow : EditorWindow
     {
         private string modName = "MyNewMod";
-<<<<<<< HEAD
         private bool isCharacterMod = false;
-=======
->>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
 
-        [MenuItem("DesktopPet/Mod Builder")]
+        [MenuItem("DesktopPet/打包自制 Mod (人物或衣服)")]
         public static void ShowWindow()
         {
-            GetWindow<ModBuilderWindow>("Mod Builder SDK");
+            GetWindow<ModBuilderWindow>("Mod 打包工具");
         }
 
         private void OnGUI()
         {
-<<<<<<< HEAD
-            GUILayout.Label("Build Custom Mod (Character or Clothing)", EditorStyles.boldLabel);
+            GUILayout.Label("打包自定义 Mod (人物模型或服装)", EditorStyles.boldLabel);
             
-            modName = EditorGUILayout.TextField("Mod Name", modName);
-            isCharacterMod = EditorGUILayout.Toggle("Is Character Base Model?", isCharacterMod);
-=======
-            GUILayout.Label("Build Custom Clothing Mod", EditorStyles.boldLabel);
-            
-            modName = EditorGUILayout.TextField("Mod Name", modName);
->>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
+            modName = EditorGUILayout.TextField("Mod 英文名 (仅字母/数字)", modName);
+            isCharacterMod = EditorGUILayout.Toggle("是否为人物基础模型？", isCharacterMod);
 
             GUILayout.Space(10);
             
-            if (GUILayout.Button("Build AssetBundle"))
+            if (GUILayout.Button("打包 AssetBundle"))
             {
                 BuildMod();
             }
@@ -44,14 +35,14 @@ namespace DesktopPet.EditorTools
         {
             if (string.IsNullOrEmpty(modName))
             {
-                EditorUtility.DisplayDialog("Error", "Mod name cannot be empty.", "OK");
+                EditorUtility.DisplayDialog("错误", "Mod 名字不能为空。", "确定");
                 return;
             }
 
             GameObject[] selectedObjects = Selection.gameObjects;
             if (selectedObjects.Length == 0)
             {
-                EditorUtility.DisplayDialog("Error", "Please select at least one prefab to build.", "OK");
+                EditorUtility.DisplayDialog("错误", "请在 Project 窗口中选中至少一个 Prefab 再打包。", "确定");
                 return;
             }
 
@@ -62,46 +53,32 @@ namespace DesktopPet.EditorTools
                 Directory.CreateDirectory(modOutputDirectory);
             }
 
-<<<<<<< HEAD
             // Determine bundle name based on type
             string finalBundleName = isCharacterMod ? $"character_{modName.ToLower()}" : $"clothes_{modName.ToLower()}";
 
-=======
->>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
             // Assign AssetBundle names to selected objects
             foreach (GameObject obj in selectedObjects)
             {
                 string assetPath = AssetDatabase.GetAssetPath(obj);
                 if (string.IsNullOrEmpty(assetPath))
                 {
-                    Debug.LogWarning($"Skipping {obj.name}: Not a saved asset/prefab.");
+                    Debug.LogWarning($"跳过 {obj.name}: 它不是一个保存在本地的资源/Prefab。");
                     continue;
                 }
 
-<<<<<<< HEAD
                 if (!isCharacterMod)
                 {
                     ClothingPart part = obj.GetComponent<ClothingPart>();
                     if (part == null)
                     {
-                        Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
+                        Debug.LogWarning($"警告: {obj.name} 没有挂载 ClothingPart 组件。它依然会被打包，但游戏内可能无法将其识别为衣服。");
                     }
-=======
-                ClothingPart part = obj.GetComponent<ClothingPart>();
-                if (part == null)
-                {
-                    Debug.LogWarning($"Warning: {obj.name} does not have a ClothingPart component. It will still be packed, but the game may not recognize it as clothing.");
->>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
                 }
 
                 AssetImporter importer = AssetImporter.GetAtPath(assetPath);
                 if (importer != null)
                 {
-<<<<<<< HEAD
                     importer.assetBundleName = finalBundleName;
-=======
-                    importer.assetBundleName = modName;
->>>>>>> 37fa2349b618eab1a21f16dd1475dfad82f86abb
                 }
             }
 
@@ -127,7 +104,7 @@ namespace DesktopPet.EditorTools
             }
 
             AssetDatabase.Refresh();
-            EditorUtility.DisplayDialog("Success", $"Mod built successfully at:\n{modOutputDirectory}", "OK");
+            EditorUtility.DisplayDialog("成功", $"Mod 打包成功！文件已输出至:\n{modOutputDirectory}", "确定");
             // EditorUtility.RevealInFinder(modOutputDirectory);
         }
     }
