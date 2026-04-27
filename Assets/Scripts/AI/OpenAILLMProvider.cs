@@ -10,7 +10,7 @@ namespace DesktopPet.AI
     {
         [Header("Configuration")]
         public string apiUrl = "https://api.openai.com/v1/chat/completions";
-        public string apiKey = "YOUR_API_KEY_HERE";
+        public string apiKey = "";
         public string modelName = "gpt-3.5-turbo";
         
         [TextArea(3, 10)]
@@ -54,6 +54,11 @@ namespace DesktopPet.AI
 
         public void SendMessageAsync(string message, Action<string, string> onSuccess, Action<string> onError)
         {
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                onError?.Invoke("OpenAI API Key is not set. Please configure it in the settings.");
+                return;
+            }
             StartCoroutine(SendRequestCoroutine(message, onSuccess, onError));
         }
 

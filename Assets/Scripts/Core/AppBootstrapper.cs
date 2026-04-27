@@ -14,6 +14,8 @@ namespace DesktopPet.Core
         public WardrobeManager wardrobeManager;
         public DressUpManager dressUpManager;
         public UIManager uiManager;
+        public AIManager aiManager;
+        public DesktopPet.Logic.AlarmManager alarmManager;
         
         [Header("Loading UI")]
         public GameObject loadingScreen;
@@ -45,7 +47,9 @@ namespace DesktopPet.Core
                 ApplySavedClothes();
             }
 
-            // 4. Initialize UI (handled mostly by their own Start methods, but we can do late binds here)
+            // 4. Initialize UI and Inject Dependencies
+            if (aiManager != null) aiManager.uiManager = uiManager;
+            if (alarmManager != null) alarmManager.uiManager = uiManager;
             
             // 5. Hide Loading Screen
             if (loadingScreen != null) loadingScreen.SetActive(false);

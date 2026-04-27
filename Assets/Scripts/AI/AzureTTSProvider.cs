@@ -11,7 +11,7 @@ namespace DesktopPet.AI
         [Header("Azure Configuration")]
         [Tooltip("e.g., eastus, westus2, etc.")]
         public string region = "eastus";
-        public string subscriptionKey = "YOUR_AZURE_TTS_KEY";
+        public string subscriptionKey = "";
         
         [Header("Voice Settings")]
         public string voiceName = "zh-CN-XiaoxiaoNeural"; // High quality female voice

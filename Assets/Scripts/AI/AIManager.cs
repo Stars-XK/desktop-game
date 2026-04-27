@@ -10,6 +10,9 @@ namespace DesktopPet.AI
         public MonoBehaviour llmProviderComponent;
         public MonoBehaviour ttsProviderComponent;
 
+        [Header("Managers")]
+        public DesktopPet.UI.UIManager uiManager;
+
         private ILLMProvider llmProvider;
         private ITTSProvider ttsProvider;
         private AudioSource audioSource;
@@ -36,7 +39,6 @@ namespace DesktopPet.AI
                     Debug.Log($"Pet [{emotion}]: {responseText}");
                     
                     // Notify UI to play typewriter effect
-                    var uiManager = FindObjectOfType<DesktopPet.UI.UIManager>();
                     if (uiManager != null)
                     {
                         uiManager.DisplayAIResponse(responseText);

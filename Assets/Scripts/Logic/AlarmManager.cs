@@ -9,6 +9,7 @@ namespace DesktopPet.Logic
     {
         [Header("System References")]
         public AIManager aiManager;
+        public DesktopPet.UI.UIManager uiManager;
 
         private class AlarmTask
         {
@@ -61,7 +62,6 @@ namespace DesktopPet.Logic
                     onSuccess: (responseText, emotion) => 
                     {
                         // Play the response just like a normal chat
-                        var uiManager = FindObjectOfType<DesktopPet.UI.UIManager>();
                         if (uiManager != null) uiManager.DisplayAIResponse(responseText);
 
                         var animatorController = aiManager.GetComponent<DesktopPet.Animation.PetAnimatorController>();
