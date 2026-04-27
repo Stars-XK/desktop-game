@@ -8,17 +8,34 @@ namespace DesktopPet.EditorTools
     public static class SampleCharacterGenerator
     {
         private const string RootDir = "Assets/Art/SampleCharacter";
-        private const string TextureDir = RootDir + "/Textures";
-        private const string MaterialDir = RootDir + "/Materials";
-        private const string PrefabDir = RootDir + "/Prefabs";
+        private const string TextureDir = "Assets/Art/Textures";
+        private const string MaterialDir = "Assets/Art/Materials";
+        private const string CharacterPrefabDir = "Assets/Art/Prefabs/Characters";
+        private const string ClothesPrefabDir = "Assets/Art/Prefabs/Clothes";
+
+        [InitializeOnLoadMethod]
+        private static void AutoGenerateIfNeeded()
+        {
+            // If the sample character doesn't exist in the standard folders, generate it automatically
+            if (!AssetDatabase.IsValidFolder(CharacterPrefabDir) || AssetDatabase.FindAssets("P_SampleCharacter", new[] { CharacterPrefabDir }).Length == 0)
+            {
+                Generate(false);
+            }
+        }
 
         [MenuItem("DesktopPet/生成示例人物与衣服贴图")]
-        public static void Generate()
+        public static void GenerateMenu()
+        {
+            Generate(true);
+        }
+
+        public static void Generate(bool showDialog = true)
         {
             EnsureDir(RootDir);
             EnsureDir(TextureDir);
             EnsureDir(MaterialDir);
-            EnsureDir(PrefabDir);
+            EnsureDir(CharacterPrefabDir);
+            EnsureDir(ClothesPrefabDir);
 
             string bodyTexPath = WriteTextureAsset("body_base.png", CreateNoiseTexture(new Color(0.93f, 0.78f, 0.67f), new Color(0.90f, 0.74f, 0.62f)));
             string hairTexPath = WriteTextureAsset("hair_base.png", CreateStripeTexture(new Color(0.12f, 0.10f, 0.08f), new Color(0.20f, 0.16f, 0.12f)));
@@ -32,17 +49,21 @@ namespace DesktopPet.EditorTools
             Material bottomMat = CreateMaterial("M_Bottom.mat", bottomTexPath);
             Material shoesMat = CreateMaterial("M_Shoes.mat", shoesTexPath);
 
-            string characterPrefabPath = PrefabDir + "/P_SampleCharacter.prefab";
+            string characterPrefabPath = CharacterPrefabDir + "/P_SampleCharacter.prefab";
             CreateCharacterPrefab(characterPrefabPath, bodyMat);
 
-            CreateClothingPrefab(PrefabDir + "/C_Hair_Short.prefab", "hair_short_01", ClothingType.Hair, "短发 (示例)", hairMat, PrimitiveType.Sphere, new Vector3(0f, 1.45f, 0f), new Vector3(0.65f, 0.45f, 0.65f));
-            CreateClothingPrefab(PrefabDir + "/C_Top_Jacket.prefab", "top_jacket_01", ClothingType.Top, "蓝色夹克 (示例)", topMat, PrimitiveType.Cylinder, new Vector3(0f, 1.05f, 0f), new Vector3(0.72f, 0.55f, 0.72f));
-            CreateClothingPrefab(PrefabDir + "/C_Bottom_Skirt.prefab", "bottom_skirt_01", ClothingType.Bottom, "黑色短裙 (示例)", bottomMat, PrimitiveType.Cylinder, new Vector3(0f, 0.55f, 0f), new Vector3(0.78f, 0.45f, 0.78f));
-            CreateShoesPrefab(PrefabDir + "/C_Shoes_Sneakers.prefab", "shoes_sneakers_01", "运动鞋 (示例)", shoesMat);
+            CreateClothingPrefab(ClothesPrefabDir + "/C_Hair_Short.prefab", "hair_short_01", ClothingType.Hair, "短发 (示例)", hairMat, PrimitiveType.Sphere, new Vector3(0f, 1.45f, 0f), new Vector3(0.65f, 0.45f, 0.65f));
+            CreateClothingPrefab(ClothesPrefabDir + "/C_Top_Jacket.prefab", "top_jacket_01", ClothingType.Top, "蓝色夹克 (示例)", topMat, PrimitiveType.Cylinder, new Vector3(0f, 1.05f, 0f), new Vector3(0.72f, 0.55f, 0.72f));
+            CreateClothingPrefab(ClothesPrefabDir + "/C_Bottom_Skirt.prefab", "bottom_skirt_01", ClothingType.Bottom, "黑色短裙 (示例)", bottomMat, PrimitiveType.Cylinder, new Vector3(0f, 0.55f, 0f), new Vector3(0.78f, 0.45f, 0.78f));
+            CreateShoesPrefab(ClothesPrefabDir + "/C_Shoes_Sneakers.prefab", "shoes_sneakers_01", "运动鞋 (示例)", shoesMat);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            EditorUtility.DisplayDialog("桌面宠物", "示例人物与衣服资源已生成至 Assets/Art/SampleCharacter 目录", "确定");
+            
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog("桌面宠物", "示例人物与衣服资源已生成至 Assets/Art 对应目录", "确定");
+            }
         }
 
         private static void EnsureDir(string path)
