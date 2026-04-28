@@ -74,13 +74,13 @@ namespace DesktopPet.Logic
                         if (ttsProvider != null)
                         {
                             ttsProvider.SynthesizeAudioAsync(responseText, 
-                                onAudioReady: clip => 
+                                onSuccess: clip => 
                                 {
                                     var audioSrc = aiManager.GetComponent<AudioSource>();
                                     audioSrc.clip = clip;
                                     audioSrc.Play();
                                 },
-                                onAudioError: error => Debug.LogError($"TTS Error on Alarm: {error}")
+                                onError: error => Debug.LogError($"TTS Error on Alarm: {error}")
                             );
                         }
                     },

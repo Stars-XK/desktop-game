@@ -61,12 +61,12 @@ namespace DesktopPet.AI
                     if (ttsProvider != null)
                     {
                         ttsProvider.SynthesizeAudioAsync(responseText, 
-                            onAudioReady: clip => 
+                            onSuccess: clip => 
                             {
                                 audioSource.clip = clip;
                                 audioSource.Play();
                             },
-                            onAudioError: error => Debug.LogError($"TTS Error: {error}")
+                            onError: error => Debug.LogError($"TTS Error: {error}")
                         );
                     }
                 },
