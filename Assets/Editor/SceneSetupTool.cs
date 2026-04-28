@@ -26,6 +26,7 @@ namespace DesktopPet.EditorTools
             GameObject cameraObj = new GameObject("Main Camera");
             cameraObj.tag = "MainCamera";
             Camera cam = cameraObj.AddComponent<Camera>();
+            cameraObj.AddComponent<AudioListener>(); // Add AudioListener for AI TTS voice and SFX
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0, 0, 0, 0); // Transparent black
             cam.orthographic = false; // Perspective is usually fine for 3D, or you can switch to orthographic

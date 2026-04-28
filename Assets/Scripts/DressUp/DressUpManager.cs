@@ -15,11 +15,16 @@ namespace DesktopPet.DressUp
 
         private void Awake()
         {
-            BuildBoneMap();
+            if (rootBone != null)
+            {
+                BuildBoneMap();
+            }
         }
 
-        private void BuildBoneMap()
+        public void BuildBoneMap()
         {
+            if (rootBone == null) return;
+            
             boneMap.Clear();
             Transform[] allBones = rootBone.GetComponentsInChildren<Transform>(true);
             foreach (Transform bone in allBones)
