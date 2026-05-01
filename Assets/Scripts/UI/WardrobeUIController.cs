@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using DesktopPet.DressUp;
 using DesktopPet.Core;
 using DesktopPet.Wardrobe;
@@ -44,6 +45,8 @@ namespace DesktopPet.UI
 
         private void Start()
         {
+            EnsureBasicUI();
+
             if (wardrobeManager != null)
             {
                 wardrobeManager.OnWardrobeLoaded += InitializeUI;
@@ -115,6 +118,52 @@ namespace DesktopPet.UI
                     characterLoader.SwitchCharacter(bundleName);
                 });
             }
+        }
+
+        private void EnsureBasicUI()
+        {
+            if (wardrobePanel != null && contentContainer != null) return;
+
+            DefaultControls.Resources resources = new DefaultControls.Resources();
+
+            GameObject canvasGo = GameObject.Find("WardrobeCanvas");
+            if (canvasGo == null)
+            {
+                canvasGo = new GameObject("WardrobeCanvas");
+                Canvas canvas = canvasGo.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvasGo.AddComponent<CanvasScaler>();
+                canvasGo.AddComponent<GraphicRaycaster>();
+            }
+
+            if (FindObjectOfType<EventSystem>() == null)
+            {
+                GameObject esGo = new GameObject("EventSystem");
+                esGo.AddComponent<EventSystem>();
+                esGo.AddComponent<StandaloneInputModule>();
+            }
+
+            GameObject scrollView = DefaultControls.CreateScrollView(resources);
+            scrollView.name = "WardrobePanel";
+            scrollView.transform.SetParent(canvasGo.transform, false);
+
+            Image panelBg = scrollView.GetComponent<Image>();
+            if (panelBg != null) panelBg.color = new Color(0f, 0f, 0f, 0.55f);
+
+            ScrollRect sr = scrollView.GetComponent<ScrollRect>();
+            if (sr != null)
+            {
+                sr.horizontal = false;
+            }
+
+            Transform content = scrollView.transform.Find("Viewport/Content");
+            if (content != null)
+            {
+                contentContainer = content;
+            }
+
+            wardrobePanel = scrollView;
+            wardrobePanel.SetActive(false);
         }
 
         private void Update()
