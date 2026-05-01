@@ -42,6 +42,8 @@ namespace DesktopPet.UI
         private bool ownedOnly;
         private ItemRarity? rarityFilter;
         private readonly List<string> tagFilter = new List<string>();
+        private GameObject presetBarRoot;
+        private readonly List<WardrobePresetSlotView> presetSlots = new List<WardrobePresetSlotView>();
 
         private void Start()
         {
@@ -164,6 +166,69 @@ namespace DesktopPet.UI
 
             wardrobePanel = scrollView;
             wardrobePanel.SetActive(false);
+
+            EnsurePresetBar(canvasGo, resources);
+        }
+
+        private void EnsurePresetBar(GameObject canvasGo, DefaultControls.Resources resources)
+        {
+            if (presetBarRoot != null) return;
+
+            presetBarRoot = new GameObject("WardrobePresetBar");
+            presetBarRoot.transform.SetParent(canvasGo.transform, false);
+            Image bg = presetBarRoot.AddComponent<Image>();
+            bg.color = new Color(0f, 0f, 0f, 0.45f);
+
+            RectTransform rt = presetBarRoot.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.2f, 0.02f);
+            rt.anchorMax = new Vector2(0.8f, 0.12f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            HorizontalLayoutGroup hlg = presetBarRoot.AddComponent<HorizontalLayoutGroup>();
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
+            hlg.spacing = 8f;
+            hlg.padding = new RectOffset(12, 12, 10, 10);
+
+            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            for (int i = 0; i < 10; i++)
+            {
+                GameObject slotBtn = DefaultControls.CreateButton(resources);
+                slotBtn.name = $"Preset_{i + 1}";
+                slotBtn.transform.SetParent(presetBarRoot.transform, false);
+
+                Text t = slotBtn.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.font = font;
+                    t.text = (i + 1).ToString();
+                    t.fontSize = 20;
+                    t.color = new Color(1f, 0.86f, 0.97f);
+                }
+
+                WardrobePresetSlotView view = slotBtn.AddComponent<WardrobePresetSlotView>();
+                view.button = slotBtn.GetComponent<Button>();
+                view.label = t;
+                view.index = i;
+                presetSlots.Add(view);
+
+                if (view.button != null)
+                {
+                    int idx = i;
+                    view.button.onClick.AddListener(() =>
+                    {
+                        bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                        HandlePresetKey(idx, shift);
+                    });
+                }
+            }
+
+            presetBarRoot.SetActive(false);
         }
 
         private void Update()
@@ -273,6 +338,11 @@ namespace DesktopPet.UI
             if (wardrobePanel != null)
             {
                 wardrobePanel.SetActive(!wardrobePanel.activeSelf);
+            }
+
+            if (presetBarRoot != null)
+            {
+                presetBarRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
             }
         }
 
