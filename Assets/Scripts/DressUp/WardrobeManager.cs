@@ -84,7 +84,11 @@ namespace DesktopPet.DressUp
         private void LoadCatalogItems()
         {
             CatalogItems.Clear();
-            if (wardrobeCatalog == null || wardrobeCatalog.items == null) return;
+            if (wardrobeCatalog == null || wardrobeCatalog.items == null || wardrobeCatalog.items.Count == 0)
+            {
+                BuildRuntimeCatalogFromAvailableClothes();
+                return;
+            }
 
             for (int i = 0; i < wardrobeCatalog.items.Count; i++)
             {
@@ -93,6 +97,33 @@ namespace DesktopPet.DressUp
                 CatalogItems.Add(item);
                 if (item.unlockByDefault)
                 {
+                    Inventory?.Grant(item.itemId);
+                }
+            }
+        }
+
+        private void BuildRuntimeCatalogFromAvailableClothes()
+        {
+            if (AvailableClothes == null || AvailableClothes.Count == 0) return;
+
+            foreach (var kv in AvailableClothes)
+            {
+                List<ClothingPart> parts = kv.Value;
+                if (parts == null) continue;
+
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    ClothingPart part = parts[i];
+                    if (part == null) continue;
+
+                    WardrobeItemDefinition item = ScriptableObject.CreateInstance<WardrobeItemDefinition>();
+                    item.itemId = string.IsNullOrEmpty(part.partId) ? part.name : part.partId;
+                    item.displayName = string.IsNullOrEmpty(part.partName) ? part.name : part.partName;
+                    item.clothingType = part.clothingType;
+                    item.rarity = ItemRarity.R;
+                    item.prefab = part.gameObject;
+                    item.unlockByDefault = true;
+                    CatalogItems.Add(item);
                     Inventory?.Grant(item.itemId);
                 }
             }

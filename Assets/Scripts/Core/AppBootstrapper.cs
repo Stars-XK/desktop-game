@@ -129,10 +129,47 @@ namespace DesktopPet.Core
             {
                 EquipPartById(ClothingType.Shoes, data.equippedShoesId);
             }
+            if (!string.IsNullOrEmpty(data.equippedAccessoryId))
+            {
+                EquipPartById(ClothingType.Accessory, data.equippedAccessoryId);
+            }
             if (!string.IsNullOrEmpty(data.equippedFullBodyId))
             {
                 EquipPartById(ClothingType.FullBody, data.equippedFullBodyId);
             }
+
+            bool hasAny =
+                !string.IsNullOrEmpty(data.equippedHairId) ||
+                !string.IsNullOrEmpty(data.equippedTopId) ||
+                !string.IsNullOrEmpty(data.equippedBottomId) ||
+                !string.IsNullOrEmpty(data.equippedShoesId) ||
+                !string.IsNullOrEmpty(data.equippedAccessoryId) ||
+                !string.IsNullOrEmpty(data.equippedFullBodyId);
+
+            if (!hasAny)
+            {
+                EquipDefaultIfExists(ClothingType.Hair, (id) => data.equippedHairId = id);
+                EquipDefaultIfExists(ClothingType.Top, (id) => data.equippedTopId = id);
+                EquipDefaultIfExists(ClothingType.Bottom, (id) => data.equippedBottomId = id);
+                EquipDefaultIfExists(ClothingType.Shoes, (id) => data.equippedShoesId = id);
+                EquipDefaultIfExists(ClothingType.Accessory, (id) => data.equippedAccessoryId = id);
+                saveManager.SaveData();
+            }
+        }
+
+        private void EquipDefaultIfExists(ClothingType type, System.Action<string> writeBack)
+        {
+            if (wardrobeManager == null) return;
+            if (dressUpManager == null) return;
+
+            List<WardrobeItemDefinition> items = wardrobeManager.GetItems(type, "", false, false, null, null, WardrobeSortMode.RarityDesc);
+            if (items == null || items.Count == 0) return;
+
+            WardrobeItemDefinition item = items[0];
+            if (item == null || item.prefab == null) return;
+
+            dressUpManager.EquipPart(item.prefab);
+            writeBack?.Invoke(item.itemId);
         }
 
         private void EquipPartById(ClothingType type, string id)

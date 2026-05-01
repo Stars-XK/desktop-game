@@ -625,6 +625,11 @@ namespace DesktopPet.UI
         private void InitializeUI()
         {
             Debug.Log("[衣橱界面] 衣服加载完毕，初始化UI... (Wardrobe loaded, initializing UI...)");
+            if (wardrobePanel != null && !wardrobePanel.activeSelf)
+            {
+                ToggleWardrobePanel();
+            }
+
             // Show Top category by default
             ShowCategory(ClothingType.Top);
         }
