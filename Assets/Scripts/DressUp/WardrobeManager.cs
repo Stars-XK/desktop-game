@@ -12,6 +12,13 @@ using UnityEditor;
 
 namespace DesktopPet.DressUp
 {
+    public enum WardrobeSortMode
+    {
+        RarityDesc,
+        NameAsc,
+        FavoritesFirst
+    }
+
     public class WardrobeManager : MonoBehaviour
     {
         public static WardrobeManager Instance { get; private set; }
@@ -93,10 +100,10 @@ namespace DesktopPet.DressUp
 
         public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText = "", bool favoritesOnly = false, bool ownedOnly = false)
         {
-            return GetItems(type, searchText, favoritesOnly, ownedOnly, null, null);
+            return GetItems(type, searchText, favoritesOnly, ownedOnly, null, null, WardrobeSortMode.RarityDesc);
         }
 
-        public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText, bool favoritesOnly, bool ownedOnly, ItemRarity? rarity, List<string> tags)
+        public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText, bool favoritesOnly, bool ownedOnly, ItemRarity? rarity, List<string> tags, WardrobeSortMode sortMode)
         {
             List<WardrobeItemDefinition> result = new List<WardrobeItemDefinition>();
 
@@ -149,7 +156,59 @@ namespace DesktopPet.DressUp
                 result.Add(item);
             }
 
+            ApplySort(result, sortMode);
             return result;
+        }
+
+        private void ApplySort(List<WardrobeItemDefinition> items, WardrobeSortMode mode)
+        {
+            if (items == null || items.Count <= 1) return;
+
+            if (mode == WardrobeSortMode.NameAsc)
+            {
+                items.Sort((a, b) => string.Compare(a != null ? a.displayName : "", b != null ? b.displayName : "", StringComparison.OrdinalIgnoreCase));
+                return;
+            }
+
+            if (mode == WardrobeSortMode.FavoritesFirst)
+            {
+                items.Sort((a, b) =>
+                {
+                    bool af = Inventory != null && a != null && Inventory.IsFavorite(a.itemId);
+                    bool bf = Inventory != null && b != null && Inventory.IsFavorite(b.itemId);
+                    int favCmp = bf.CompareTo(af);
+                    if (favCmp != 0) return favCmp;
+
+                    int rCmp = RarityRank(b).CompareTo(RarityRank(a));
+                    if (rCmp != 0) return rCmp;
+
+                    return string.Compare(a != null ? a.displayName : "", b != null ? b.displayName : "", StringComparison.OrdinalIgnoreCase);
+                });
+                return;
+            }
+
+            items.Sort((a, b) =>
+            {
+                int rCmp = RarityRank(b).CompareTo(RarityRank(a));
+                if (rCmp != 0) return rCmp;
+                return string.Compare(a != null ? a.displayName : "", b != null ? b.displayName : "", StringComparison.OrdinalIgnoreCase);
+            });
+        }
+
+        private static int RarityRank(WardrobeItemDefinition item)
+        {
+            if (item == null) return 0;
+            switch (item.rarity)
+            {
+                case ItemRarity.SSR:
+                    return 4;
+                case ItemRarity.SR:
+                    return 3;
+                case ItemRarity.R:
+                    return 2;
+                default:
+                    return 1;
+            }
         }
 
         public WardrobeItemDefinition FindItem(string itemId)
