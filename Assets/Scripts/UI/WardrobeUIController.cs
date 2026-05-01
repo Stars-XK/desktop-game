@@ -583,7 +583,7 @@ namespace DesktopPet.UI
                     {
                         wardrobeManager.Inventory.ToggleFavorite(item.itemId);
                         bool nowFav = wardrobeManager.Inventory.IsFavorite(item.itemId);
-                        if (card.favoriteRoot != null) card.favoriteRoot.SetActive(nowFav);
+                        if (card.favoriteText != null) card.favoriteText.text = nowFav ? "★" : "☆";
                     });
                 }
             }
