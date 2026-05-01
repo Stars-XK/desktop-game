@@ -75,6 +75,18 @@ namespace DesktopPet.UI
             if (Input.GetKeyDown(KeyCode.F9)) HandlePresetKey(8, shift);
             if (Input.GetKeyDown(KeyCode.F10)) HandlePresetKey(9, shift);
 
+            if (Input.GetKeyDown(KeyCode.O)) ToggleWardrobePanel();
+
+            if (Input.GetKeyDown(KeyCode.P))
+            {
+                HandlePresetKey(0, shift);
+            }
+
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                ToggleFavoriteCurrent();
+            }
+
             if (dressUpManager != null)
             {
                 if (Input.GetKeyDown(KeyCode.Z)) dressUpManager.CycleColorVariant(lastEquippedType, -1);
@@ -121,6 +133,47 @@ namespace DesktopPet.UI
                 Destroy(child.gameObject);
             }
 
+            List<WardrobeItemDefinition> items = wardrobeManager != null ? wardrobeManager.GetItems(category) : new List<WardrobeItemDefinition>();
+            if (items != null && items.Count > 0)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    WardrobeItemDefinition item = items[i];
+                    if (item == null || item.prefab == null) continue;
+
+                    GameObject btnObj = Instantiate(clothingButtonPrefab, contentContainer);
+                    Text btnText = btnObj.GetComponentInChildren<Text>();
+                    if (btnText != null)
+                    {
+                        bool fav = wardrobeManager.Inventory != null && wardrobeManager.Inventory.IsFavorite(item.itemId);
+                        btnText.text = (fav ? "★ " : "") + item.displayName;
+                    }
+
+                    Button btn = btnObj.GetComponent<Button>();
+                    if (btn != null)
+                    {
+                        btn.onClick.AddListener(() =>
+                        {
+                            dressUpManager.EquipPart(item.prefab);
+                            lastEquippedType = item.clothingType;
+
+                            var data = DesktopPet.Data.SaveManager.Instance.CurrentData;
+                            switch (item.clothingType)
+                            {
+                                case ClothingType.Hair: data.equippedHairId = item.itemId; break;
+                                case ClothingType.Top: data.equippedTopId = item.itemId; break;
+                                case ClothingType.Bottom: data.equippedBottomId = item.itemId; break;
+                                case ClothingType.Shoes: data.equippedShoesId = item.itemId; break;
+                                case ClothingType.Accessory: data.equippedAccessoryId = item.itemId; break;
+                                case ClothingType.FullBody: data.equippedFullBodyId = item.itemId; break;
+                            }
+                            DesktopPet.Data.SaveManager.Instance.SaveData();
+                        });
+                    }
+                }
+                return;
+            }
+
             if (!wardrobeManager.AvailableClothes.TryGetValue(category, out List<ClothingPart> parts))
             {
                 Debug.Log($"[衣橱界面] 未找到类别: {category} 的服装 (No clothing found for category)");
@@ -159,6 +212,31 @@ namespace DesktopPet.UI
                         DesktopPet.Data.SaveManager.Instance.SaveData();
                     });
                 }
+            }
+        }
+
+        private void ToggleFavoriteCurrent()
+        {
+            if (wardrobeManager == null || wardrobeManager.Inventory == null) return;
+
+            var data = DesktopPet.Data.SaveManager.Instance.CurrentData;
+            if (data == null) return;
+
+            string itemId = "";
+            switch (lastEquippedType)
+            {
+                case ClothingType.Hair: itemId = data.equippedHairId; break;
+                case ClothingType.Top: itemId = data.equippedTopId; break;
+                case ClothingType.Bottom: itemId = data.equippedBottomId; break;
+                case ClothingType.Shoes: itemId = data.equippedShoesId; break;
+                case ClothingType.Accessory: itemId = data.equippedAccessoryId; break;
+                case ClothingType.FullBody: itemId = data.equippedFullBodyId; break;
+            }
+
+            if (!string.IsNullOrEmpty(itemId))
+            {
+                wardrobeManager.Inventory.ToggleFavorite(itemId);
+                ShowCategory(lastEquippedType);
             }
         }
 

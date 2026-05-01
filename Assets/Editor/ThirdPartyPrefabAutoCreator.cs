@@ -137,6 +137,42 @@ namespace DesktopPet.EditorTools
                 attachBoneName: "LeftHand",
                 force: force
             );
+
+            CreateAccessory(
+                modelPath: "Assets/Art/Models/ThirdParty/Quaternius_LowPolyRPG/RPG Pack/FBX/AnimatedChest.fbx",
+                prefabPath: "Assets/Art/Prefabs/Clothes/Accessories/C_Accessory_Chest.prefab",
+                partId: "acc_chest",
+                partName: "宝箱",
+                attachBoneName: "LeftHand",
+                force: force
+            );
+
+            CreateAccessory(
+                modelPath: "Assets/Art/Models/ThirdParty/Quaternius_LowPolyRPG/RPG Pack/FBX/Barrel.fbx",
+                prefabPath: "Assets/Art/Prefabs/Clothes/Accessories/C_Accessory_Barrel.prefab",
+                partId: "acc_barrel",
+                partName: "木桶",
+                attachBoneName: "LeftHand",
+                force: force
+            );
+
+            CreateAccessory(
+                modelPath: "Assets/Art/Models/ThirdParty/Quaternius_LowPolyRPG/RPG Pack/FBX/Gems.fbx",
+                prefabPath: "Assets/Art/Prefabs/Clothes/Accessories/C_Accessory_Gems.prefab",
+                partId: "acc_gems",
+                partName: "宝石",
+                attachBoneName: "LeftHand",
+                force: force
+            );
+
+            CreateAccessory(
+                modelPath: "Assets/Art/Models/ThirdParty/Quaternius_LowPolyRPG/RPG Pack/FBX/Rollofpaper.fbx",
+                prefabPath: "Assets/Art/Prefabs/Clothes/Accessories/C_Accessory_RollOfPaper.prefab",
+                partId: "acc_roll_of_paper",
+                partName: "纸卷",
+                attachBoneName: "LeftHand",
+                force: force
+            );
         }
 
         private static void CreateAccessory(string modelPath, string prefabPath, string partId, string partName, string attachBoneName, bool force)
@@ -198,4 +234,3 @@ namespace DesktopPet.EditorTools
         }
     }
 }
-
