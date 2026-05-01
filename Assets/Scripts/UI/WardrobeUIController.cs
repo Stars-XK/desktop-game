@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DesktopPet.DressUp;
 using DesktopPet.Core;
+using DesktopPet.Wardrobe;
 
 namespace DesktopPet.UI
 {
@@ -59,6 +60,32 @@ namespace DesktopPet.UI
             if (Input.GetKeyDown(KeyCode.Alpha4)) ShowCategory(ClothingType.Shoes);
             if (Input.GetKeyDown(KeyCode.Alpha5)) ShowCategory(ClothingType.Accessory);
             if (Input.GetKeyDown(KeyCode.Alpha6)) ShowCategory(ClothingType.FullBody);
+
+            bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            if (Input.GetKeyDown(KeyCode.F1)) HandlePresetKey(0, shift);
+            if (Input.GetKeyDown(KeyCode.F2)) HandlePresetKey(1, shift);
+            if (Input.GetKeyDown(KeyCode.F3)) HandlePresetKey(2, shift);
+            if (Input.GetKeyDown(KeyCode.F4)) HandlePresetKey(3, shift);
+            if (Input.GetKeyDown(KeyCode.F5)) HandlePresetKey(4, shift);
+            if (Input.GetKeyDown(KeyCode.F6)) HandlePresetKey(5, shift);
+            if (Input.GetKeyDown(KeyCode.F7)) HandlePresetKey(6, shift);
+            if (Input.GetKeyDown(KeyCode.F8)) HandlePresetKey(7, shift);
+            if (Input.GetKeyDown(KeyCode.F9)) HandlePresetKey(8, shift);
+            if (Input.GetKeyDown(KeyCode.F10)) HandlePresetKey(9, shift);
+        }
+
+        private void HandlePresetKey(int index, bool save)
+        {
+            var saveManager = DesktopPet.Data.SaveManager.Instance;
+            if (saveManager == null || wardrobeManager == null || dressUpManager == null) return;
+
+            if (save)
+            {
+                OutfitPreset.SaveCurrentToSlot(saveManager, index);
+                return;
+            }
+
+            OutfitPreset.ApplySlot(saveManager, wardrobeManager, dressUpManager, index);
         }
 
         private void OnDestroy()

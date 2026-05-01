@@ -130,6 +130,33 @@ namespace DesktopPet.DressUp
             return result;
         }
 
+        public WardrobeItemDefinition FindItem(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId)) return null;
+
+            for (int i = 0; i < CatalogItems.Count; i++)
+            {
+                WardrobeItemDefinition item = CatalogItems[i];
+                if (item != null && item.itemId == itemId) return item;
+            }
+
+            return null;
+        }
+
+        public GameObject FindPrefabByPartId(ClothingType type, string partId)
+        {
+            if (string.IsNullOrEmpty(partId)) return null;
+            if (!AvailableClothes.TryGetValue(type, out List<ClothingPart> parts) || parts == null) return null;
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                ClothingPart part = parts[i];
+                if (part != null && part.partId == partId) return part.gameObject;
+            }
+
+            return null;
+        }
+
 #if UNITY_EDITOR
         private void LoadClothesFromAssetsInEditor()
         {
