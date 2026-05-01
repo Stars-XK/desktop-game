@@ -30,6 +30,7 @@ namespace DesktopPet.Core
         {
             EnsureWardrobeUIController();
             EnsureShowroomControllers();
+            EnsureVoiceControllers();
             EnsureEditorFallbackCharacter();
             EnsureEditorCameraVisible();
         }
@@ -115,6 +116,19 @@ namespace DesktopPet.Core
             ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
             if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
             camCtl.cam = Camera.main;
+        }
+
+        private void EnsureVoiceControllers()
+        {
+            OpenAIWhisperSTTProvider stt = GetComponent<OpenAIWhisperSTTProvider>();
+            if (stt == null) stt = gameObject.AddComponent<OpenAIWhisperSTTProvider>();
+
+            VoiceInputController vic = GetComponent<VoiceInputController>();
+            if (vic == null) vic = gameObject.AddComponent<VoiceInputController>();
+            vic.sttProviderComponent = stt;
+            vic.aiManager = aiManager;
+            vic.uiManager = uiManager;
+            vic.showroomUI = GetComponent<WardrobeShowroomUI>();
         }
 
         private void BindShowroomTarget()

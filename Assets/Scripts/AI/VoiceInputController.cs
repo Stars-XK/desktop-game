@@ -39,6 +39,7 @@ namespace DesktopPet.AI
 
         private void Update()
         {
+            if (micUiRoot == null) EnsureMicUI();
             if (Input.GetKeyDown(pushToTalkKey)) StartRecording();
             if (Input.GetKeyUp(pushToTalkKey)) StopAndTranscribe();
         }
@@ -152,4 +153,3 @@ namespace DesktopPet.AI
         }
     }
 }
-
