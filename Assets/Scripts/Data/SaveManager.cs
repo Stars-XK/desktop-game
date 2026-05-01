@@ -1,9 +1,22 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 namespace DesktopPet.Data
 {
+    [Serializable]
+    public class OutfitPresetData
+    {
+        public string name = "";
+        public string hairItemId = "";
+        public string topItemId = "";
+        public string bottomItemId = "";
+        public string shoesItemId = "";
+        public string accessoryItemId = "";
+        public string fullBodyItemId = "";
+    }
+
     [Serializable]
     public class PetSaveData
     {
@@ -17,6 +30,15 @@ namespace DesktopPet.Data
         
         public string openAIApiKey = "";
         public float volume = 1.0f;
+
+        public List<string> ownedItemIds = new List<string>();
+        public List<string> favoriteItemIds = new List<string>();
+        public List<OutfitPresetData> outfitPresets = new List<OutfitPresetData>();
+
+        public List<string> colorVariantKeys_itemId = new List<string>();
+        public List<string> colorVariantKeys_variantId = new List<string>();
+        public List<string> materialVariantKeys_itemId = new List<string>();
+        public List<string> materialVariantKeys_variantId = new List<string>();
     }
 
     public class SaveManager : MonoBehaviour
@@ -65,19 +87,44 @@ namespace DesktopPet.Data
                 {
                     string json = File.ReadAllText(savePath);
                     CurrentData = JsonUtility.FromJson<PetSaveData>(json);
+                    EnsureDefaults(CurrentData);
                     Debug.Log("[存档系统] 数据加载成功 (Data loaded successfully).");
                 }
                 catch (Exception e)
                 {
                     Debug.LogError($"[存档系统] 加载数据失败 (Failed to load data): {e.Message}");
                     CurrentData = new PetSaveData();
+                    EnsureDefaults(CurrentData);
                 }
             }
             else
             {
                 Debug.Log("[存档系统] 未找到存档文件，正在创建新存档 (No save file found. Creating new save data).");
                 CurrentData = new PetSaveData();
+                EnsureDefaults(CurrentData);
                 SaveData(); // Create initial file
+            }
+        }
+
+        private static void EnsureDefaults(PetSaveData data)
+        {
+            if (data == null) return;
+
+            if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
+            if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
+            if (data.outfitPresets == null) data.outfitPresets = new List<OutfitPresetData>();
+            if (data.colorVariantKeys_itemId == null) data.colorVariantKeys_itemId = new List<string>();
+            if (data.colorVariantKeys_variantId == null) data.colorVariantKeys_variantId = new List<string>();
+            if (data.materialVariantKeys_itemId == null) data.materialVariantKeys_itemId = new List<string>();
+            if (data.materialVariantKeys_variantId == null) data.materialVariantKeys_variantId = new List<string>();
+
+            int presetCount = 10;
+            if (data.outfitPresets.Count == 0)
+            {
+                for (int i = 0; i < presetCount; i++)
+                {
+                    data.outfitPresets.Add(new OutfitPresetData { name = $"预设 {i + 1}" });
+                }
             }
         }
     }
