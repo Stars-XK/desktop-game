@@ -93,6 +93,11 @@ namespace DesktopPet.DressUp
 
         public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText = "", bool favoritesOnly = false, bool ownedOnly = false)
         {
+            return GetItems(type, searchText, favoritesOnly, ownedOnly, null, null);
+        }
+
+        public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText, bool favoritesOnly, bool ownedOnly, ItemRarity? rarity, List<string> tags)
+        {
             List<WardrobeItemDefinition> result = new List<WardrobeItemDefinition>();
 
             for (int i = 0; i < CatalogItems.Count; i++)
@@ -101,8 +106,25 @@ namespace DesktopPet.DressUp
                 if (item == null) continue;
                 if (item.clothingType != type) continue;
 
+                if (rarity.HasValue && item.rarity != rarity.Value) continue;
                 if (ownedOnly && Inventory != null && !Inventory.IsOwned(item.itemId)) continue;
                 if (favoritesOnly && Inventory != null && !Inventory.IsFavorite(item.itemId)) continue;
+
+                if (tags != null && tags.Count > 0)
+                {
+                    bool ok = true;
+                    for (int t = 0; t < tags.Count; t++)
+                    {
+                        string tag = tags[t];
+                        if (string.IsNullOrEmpty(tag)) continue;
+                        if (item.tags == null || !item.tags.Contains(tag))
+                        {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (!ok) continue;
+                }
 
                 if (!string.IsNullOrEmpty(searchText))
                 {
