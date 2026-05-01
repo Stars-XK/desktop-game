@@ -319,7 +319,7 @@ namespace DesktopPet.UI
             chipsGrid.cellSize = new Vector2(120, 34);
             chipsGrid.spacing = new Vector2(8, 8);
             chipsGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            chipsGrid.constraintCount = 1;
+            chipsGrid.constraintCount = 2;
             RectTransform chipsRt = chipsGo.GetComponent<RectTransform>();
             chipsRt.sizeDelta = new Vector2(0, 360);
 
@@ -624,8 +624,12 @@ namespace DesktopPet.UI
             DefaultControls.Resources resources = new DefaultControls.Resources();
             Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-            foreach (string tag in tags)
+            List<string> ordered = new List<string>(tags);
+            ordered.Sort(CompareTag);
+
+            for (int i = 0; i < ordered.Count; i++)
             {
+                string tag = ordered[i];
                 GameObject chipGo = DefaultControls.CreateButton(resources);
                 chipGo.name = $"Tag_{tag}";
                 chipGo.transform.SetParent(tagChipsRoot, false);
@@ -642,7 +646,7 @@ namespace DesktopPet.UI
                 Image bg = chipGo.GetComponent<Image>();
                 if (bg != null)
                 {
-                    bg.color = tagFilter.Contains(tag) ? new Color(0.95f, 0.55f, 0.85f, 0.85f) : new Color(0.25f, 0.20f, 0.30f, 0.65f);
+                    bg.color = tagFilter.Contains(tag) ? new Color(0.98f, 0.52f, 0.86f, 0.95f) : new Color(0.20f, 0.16f, 0.24f, 0.65f);
                 }
 
                 Button btn = chipGo.GetComponent<Button>();
@@ -664,6 +668,51 @@ namespace DesktopPet.UI
 
                 tagChipButtons.Add(btn);
                 tagChipTags.Add(tag);
+            }
+        }
+
+        private static int CompareTag(string a, string b)
+        {
+            int ra = TagRank(a);
+            int rb = TagRank(b);
+            if (ra != rb) return ra.CompareTo(rb);
+            return string.Compare(a, b, System.StringComparison.Ordinal);
+        }
+
+        private static int TagRank(string tag)
+        {
+            if (string.IsNullOrEmpty(tag)) return 9999;
+
+            switch (tag)
+            {
+                case "发型":
+                    return 10;
+                case "上衣":
+                    return 11;
+                case "下装":
+                    return 12;
+                case "鞋子":
+                    return 13;
+                case "配饰":
+                    return 14;
+                case "整套":
+                    return 15;
+                case "武器":
+                    return 30;
+                case "头饰":
+                    return 31;
+                case "法杖":
+                    return 32;
+                case "盾":
+                    return 33;
+                case "魔法":
+                    return 34;
+                case "宝石":
+                    return 35;
+                case "道具":
+                    return 36;
+                default:
+                    return 100;
             }
         }
 
