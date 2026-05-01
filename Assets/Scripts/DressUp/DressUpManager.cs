@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using DesktopPet.Wardrobe;
 
 namespace DesktopPet.DressUp
 {
@@ -11,6 +12,7 @@ namespace DesktopPet.DressUp
 
         private Dictionary<string, Transform> boneMap = new Dictionary<string, Transform>();
         private Dictionary<ClothingType, GameObject> equippedParts = new Dictionary<ClothingType, GameObject>();
+        private Dictionary<ClothingType, string> equippedItemIds = new Dictionary<ClothingType, string>();
         private List<int> currentlyHiddenBlendshapes = new List<int>();
 
         private void Awake()
@@ -69,6 +71,8 @@ namespace DesktopPet.DressUp
             }
 
             equippedParts[partData.clothingType] = newPart;
+            equippedItemIds[partData.clothingType] = partData.partId;
+            ApplyVariants(newPart, partData.partId);
 
             // Apply physics linking if available
             PhysicsLinker linker = GetComponent<PhysicsLinker>();
@@ -129,12 +133,71 @@ namespace DesktopPet.DressUp
             smr.rootBone = rootBone;
         }
 
+        private void ApplyVariants(GameObject partInstance, string itemId)
+        {
+            if (partInstance == null || string.IsNullOrEmpty(itemId)) return;
+
+            string colorVariantId = WardrobeVariants.GetSavedColorVariantId(itemId);
+            string materialVariantId = WardrobeVariants.GetSavedMaterialVariantId(itemId);
+
+            Renderer[] renderers = partInstance.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer r = renderers[i];
+                if (r == null) continue;
+
+                Material mat = r.material;
+                WardrobeVariants.ApplyMaterialVariant(mat, materialVariantId);
+                if (WardrobeVariants.TryGetColor(colorVariantId, out Color c))
+                {
+                    mat.color = c;
+                }
+            }
+        }
+
+        public void CycleColorVariant(ClothingType type, int delta)
+        {
+            if (!equippedItemIds.TryGetValue(type, out string itemId) || string.IsNullOrEmpty(itemId)) return;
+
+            string current = WardrobeVariants.GetSavedColorVariantId(itemId);
+            int idx = WardrobeVariants.ColorVariantIds.IndexOf(current);
+            if (idx < 0) idx = 0;
+
+            int next = (idx + delta) % WardrobeVariants.ColorVariantIds.Count;
+            if (next < 0) next += WardrobeVariants.ColorVariantIds.Count;
+
+            WardrobeVariants.SaveColorVariantId(itemId, WardrobeVariants.ColorVariantIds[next]);
+            if (equippedParts.TryGetValue(type, out GameObject partInstance))
+            {
+                ApplyVariants(partInstance, itemId);
+            }
+        }
+
+        public void CycleMaterialVariant(ClothingType type, int delta)
+        {
+            if (!equippedItemIds.TryGetValue(type, out string itemId) || string.IsNullOrEmpty(itemId)) return;
+
+            string current = WardrobeVariants.GetSavedMaterialVariantId(itemId);
+            int idx = WardrobeVariants.MaterialVariantIds.IndexOf(current);
+            if (idx < 0) idx = 0;
+
+            int next = (idx + delta) % WardrobeVariants.MaterialVariantIds.Count;
+            if (next < 0) next += WardrobeVariants.MaterialVariantIds.Count;
+
+            WardrobeVariants.SaveMaterialVariantId(itemId, WardrobeVariants.MaterialVariantIds[next]);
+            if (equippedParts.TryGetValue(type, out GameObject partInstance))
+            {
+                ApplyVariants(partInstance, itemId);
+            }
+        }
+
         public void UnequipPart(ClothingType type)
         {
             if (equippedParts.TryGetValue(type, out GameObject part))
             {
                 Destroy(part);
                 equippedParts.Remove(type);
+                equippedItemIds.Remove(type);
                 
                 // Restore blendshapes here
                 if (baseBodyMesh != null)

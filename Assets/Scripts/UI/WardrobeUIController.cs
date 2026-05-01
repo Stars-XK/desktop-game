@@ -28,6 +28,8 @@ namespace DesktopPet.UI
         public Button reloadCharacterButton;
         public CharacterModLoader characterLoader;
 
+        private ClothingType lastEquippedType = ClothingType.Top;
+
         private void Start()
         {
             if (wardrobeManager != null)
@@ -72,6 +74,14 @@ namespace DesktopPet.UI
             if (Input.GetKeyDown(KeyCode.F8)) HandlePresetKey(7, shift);
             if (Input.GetKeyDown(KeyCode.F9)) HandlePresetKey(8, shift);
             if (Input.GetKeyDown(KeyCode.F10)) HandlePresetKey(9, shift);
+
+            if (dressUpManager != null)
+            {
+                if (Input.GetKeyDown(KeyCode.Z)) dressUpManager.CycleColorVariant(lastEquippedType, -1);
+                if (Input.GetKeyDown(KeyCode.X)) dressUpManager.CycleColorVariant(lastEquippedType, 1);
+                if (Input.GetKeyDown(KeyCode.C)) dressUpManager.CycleMaterialVariant(lastEquippedType, -1);
+                if (Input.GetKeyDown(KeyCode.V)) dressUpManager.CycleMaterialVariant(lastEquippedType, 1);
+            }
         }
 
         private void HandlePresetKey(int index, bool save)
@@ -135,6 +145,7 @@ namespace DesktopPet.UI
                     {
                         Debug.Log($"[衣橱界面] 正在装备: {part.partName} (Equipping {part.partName})");
                         dressUpManager.EquipPart(part.gameObject);
+                        lastEquippedType = part.clothingType;
                         
                         var data = DesktopPet.Data.SaveManager.Instance.CurrentData;
                         switch (part.clothingType)
