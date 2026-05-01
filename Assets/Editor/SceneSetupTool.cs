@@ -80,6 +80,7 @@ namespace DesktopPet.EditorTools
             characterLoader.dressUpManager = dressUpManager;
             characterLoader.mainCamera = cam;
             characterLoader.clickableLayer = -1; // Default to everything
+            characterLoader.fallbackCharacterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Prefabs/Characters/P_Kenney_Blocky_A.prefab");
 
             wardrobeManager.bundleLoader = assetBundleLoader;
 

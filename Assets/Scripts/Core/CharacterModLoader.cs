@@ -15,6 +15,7 @@ namespace DesktopPet.Core
         public DressUpManager dressUpManager;
         public Camera mainCamera;
         public LayerMask clickableLayer;
+        public GameObject fallbackCharacterPrefab;
 
         private AssetBundleLoader bundleLoader;
         private GameObject currentCharacterInstance;
@@ -40,6 +41,16 @@ namespace DesktopPet.Core
             if (string.IsNullOrEmpty(targetBundle))
             {
                 Debug.Log("[角色加载器] Mods 文件夹下未发现人物 Bundle (No character bundle found).");
+                if (fallbackCharacterPrefab != null)
+                {
+                    if (currentCharacterInstance != null)
+                    {
+                        Destroy(currentCharacterInstance);
+                    }
+                    currentCharacterInstance = Instantiate(fallbackCharacterPrefab);
+                    currentCharacterInstance.name = fallbackCharacterPrefab.name;
+                    BindCharacterToSystems(currentCharacterInstance);
+                }
                 onComplete?.Invoke();
                 yield break;
             }

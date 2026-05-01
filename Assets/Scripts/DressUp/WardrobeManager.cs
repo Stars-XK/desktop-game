@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using DesktopPet.Core;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DesktopPet.DressUp
 {
@@ -13,6 +16,9 @@ namespace DesktopPet.DressUp
 
         [Header("系统引用 (System References)")]
         public AssetBundleLoader bundleLoader;
+
+        public bool loadFromAssetsInEditor = true;
+        public string editorClothesFolder = "Assets/Art/Prefabs/Clothes";
 
         // Categorized clothing prefabs loaded from mods
         public Dictionary<ClothingType, List<ClothingPart>> AvailableClothes { get; private set; } = new Dictionary<ClothingType, List<ClothingPart>>();
@@ -40,8 +46,56 @@ namespace DesktopPet.DressUp
         public void Start()
         {
             if (bundleLoader == null) bundleLoader = GetComponent<AssetBundleLoader>();
+#if UNITY_EDITOR
+            if (loadFromAssetsInEditor)
+            {
+                LoadClothesFromAssetsInEditor();
+            }
+#endif
             ScanAndLoadMods();
         }
+
+#if UNITY_EDITOR
+        private void LoadClothesFromAssetsInEditor()
+        {
+            if (string.IsNullOrEmpty(editorClothesFolder) || !AssetDatabase.IsValidFolder(editorClothesFolder)) return;
+
+            string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { editorClothesFolder });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null) continue;
+
+                ClothingPart part = prefab.GetComponent<ClothingPart>();
+                if (part == null) continue;
+
+                if (!AvailableClothes.ContainsKey(part.clothingType))
+                {
+                    AvailableClothes[part.clothingType] = new List<ClothingPart>();
+                }
+
+                bool exists = false;
+                if (!string.IsNullOrEmpty(part.partId))
+                {
+                    List<ClothingPart> list = AvailableClothes[part.clothingType];
+                    for (int j = 0; j < list.Count; j++)
+                    {
+                        if (list[j] != null && list[j].partId == part.partId)
+                        {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!exists)
+                {
+                    AvailableClothes[part.clothingType].Add(part);
+                }
+            }
+        }
+#endif
 
         private void ScanAndLoadMods()
         {

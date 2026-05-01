@@ -56,9 +56,16 @@ namespace DesktopPet.DressUp
             
             // Remap bones for all SkinnedMeshRenderers in the new part
             SkinnedMeshRenderer[] renderers = newPart.GetComponentsInChildren<SkinnedMeshRenderer>();
-            foreach (SkinnedMeshRenderer smr in renderers)
+            if (partData.attachToBone || renderers.Length == 0)
             {
-                RemapBones(smr);
+                AttachToBone(newPart, partData);
+            }
+            else
+            {
+                foreach (SkinnedMeshRenderer smr in renderers)
+                {
+                    RemapBones(smr);
+                }
             }
 
             equippedParts[partData.clothingType] = newPart;
@@ -84,6 +91,22 @@ namespace DesktopPet.DressUp
                     }
                 }
             }
+        }
+
+        private void AttachToBone(GameObject partInstance, ClothingPart partData)
+        {
+            Transform targetBone = rootBone;
+            if (!string.IsNullOrEmpty(partData.attachBoneName) && boneMap.TryGetValue(partData.attachBoneName, out Transform found))
+            {
+                targetBone = found;
+            }
+
+            if (targetBone == null) targetBone = transform;
+
+            partInstance.transform.SetParent(targetBone, false);
+            partInstance.transform.localPosition = partData.attachLocalPosition;
+            partInstance.transform.localEulerAngles = partData.attachLocalEulerAngles;
+            partInstance.transform.localScale = partData.attachLocalScale == Vector3.zero ? Vector3.one : partData.attachLocalScale;
         }
 
         private void RemapBones(SkinnedMeshRenderer smr)
