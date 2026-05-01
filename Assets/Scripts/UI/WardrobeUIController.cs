@@ -51,6 +51,16 @@ namespace DesktopPet.UI
             }
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1)) ShowCategory(ClothingType.Hair);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) ShowCategory(ClothingType.Top);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) ShowCategory(ClothingType.Bottom);
+            if (Input.GetKeyDown(KeyCode.Alpha4)) ShowCategory(ClothingType.Shoes);
+            if (Input.GetKeyDown(KeyCode.Alpha5)) ShowCategory(ClothingType.Accessory);
+            if (Input.GetKeyDown(KeyCode.Alpha6)) ShowCategory(ClothingType.FullBody);
+        }
+
         private void OnDestroy()
         {
             if (wardrobeManager != null)
