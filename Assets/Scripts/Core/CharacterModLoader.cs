@@ -16,6 +16,7 @@ namespace DesktopPet.Core
         public Camera mainCamera;
         public LayerMask clickableLayer;
         public GameObject fallbackCharacterPrefab;
+        public bool preferFallbackCharacterInEditor = true;
 
         private AssetBundleLoader bundleLoader;
         private GameObject currentCharacterInstance;
@@ -28,6 +29,21 @@ namespace DesktopPet.Core
 
         public IEnumerator LoadCharacterFromSaveCoroutine(Action onComplete)
         {
+#if UNITY_EDITOR
+            if (preferFallbackCharacterInEditor && fallbackCharacterPrefab != null)
+            {
+                if (currentCharacterInstance != null)
+                {
+                    Destroy(currentCharacterInstance);
+                }
+                currentCharacterInstance = Instantiate(fallbackCharacterPrefab);
+                currentCharacterInstance.name = fallbackCharacterPrefab.name;
+                BindCharacterToSystems(currentCharacterInstance);
+                onComplete?.Invoke();
+                yield break;
+            }
+#endif
+
             string modsDir = bundleLoader.GetModsDirectory();
             if (!Directory.Exists(modsDir))
             {
