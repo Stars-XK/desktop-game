@@ -10,8 +10,10 @@ namespace DesktopPet.UI
         public Image frameImage;
         public Image iconImage;
         public Text nameText;
+        public Button favoriteButton;
         public GameObject favoriteRoot;
         public GameObject lockRoot;
+        public WardrobeSsrShine ssrShine;
 
         public string itemId;
         public DesktopPet.DressUp.ClothingType clothingType;
@@ -27,6 +29,7 @@ namespace DesktopPet.UI
 
             if (favoriteRoot != null) favoriteRoot.SetActive(isFavorite);
             if (lockRoot != null) lockRoot.SetActive(!isOwned);
+            if (ssrShine != null) ssrShine.enabled = item != null && item.rarity == ItemRarity.SSR;
 
             if (iconImage != null)
             {
@@ -37,4 +40,3 @@ namespace DesktopPet.UI
         }
     }
 }
-
