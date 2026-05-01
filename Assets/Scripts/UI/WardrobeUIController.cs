@@ -42,6 +42,16 @@ namespace DesktopPet.UI
         private bool ownedOnly;
         private ItemRarity? rarityFilter;
         private readonly List<string> tagFilter = new List<string>();
+        private WardrobeSortMode sortMode = WardrobeSortMode.RarityDesc;
+        private GameObject filterPanelRoot;
+        private Transform tagChipsRoot;
+        private Dropdown sortDropdown;
+        private ScrollRect wardrobeScrollRect;
+        private readonly List<Button> tagChipButtons = new List<Button>();
+        private readonly List<string> tagChipTags = new List<string>();
+        private readonly List<WardrobeItemDefinition> currentQuery = new List<WardrobeItemDefinition>();
+        private int renderedCount;
+        private int pageSize = 40;
         private GameObject presetBarRoot;
         private readonly List<WardrobePresetSlotView> presetSlots = new List<WardrobePresetSlotView>();
 
@@ -110,6 +120,24 @@ namespace DesktopPet.UI
                     RefreshCurrent();
                 });
             }
+
+            if (sortDropdown != null)
+            {
+                sortDropdown.onValueChanged.AddListener((value) =>
+                {
+                    sortMode = WardrobeSortMode.RarityDesc;
+                    switch (value)
+                    {
+                        case 1:
+                            sortMode = WardrobeSortMode.NameAsc;
+                            break;
+                        case 2:
+                            sortMode = WardrobeSortMode.FavoritesFirst;
+                            break;
+                    }
+                    RefreshCurrent();
+                });
+            }
             
             if (reloadCharacterButton != null && characterLoader != null)
             {
@@ -156,7 +184,14 @@ namespace DesktopPet.UI
             if (sr != null)
             {
                 sr.horizontal = false;
+                wardrobeScrollRect = sr;
             }
+
+            RectTransform panelRt = scrollView.GetComponent<RectTransform>();
+            panelRt.anchorMin = new Vector2(0.22f, 0.14f);
+            panelRt.anchorMax = new Vector2(0.98f, 0.90f);
+            panelRt.offsetMin = Vector2.zero;
+            panelRt.offsetMax = Vector2.zero;
 
             Transform content = scrollView.transform.Find("Viewport/Content");
             if (content != null)
@@ -167,7 +202,128 @@ namespace DesktopPet.UI
             wardrobePanel = scrollView;
             wardrobePanel.SetActive(false);
 
+            EnsureFilterPanel(canvasGo, resources);
             EnsurePresetBar(canvasGo, resources);
+        }
+
+        private void EnsureFilterPanel(GameObject canvasGo, DefaultControls.Resources resources)
+        {
+            if (filterPanelRoot != null) return;
+
+            filterPanelRoot = new GameObject("WardrobeFilterPanel");
+            filterPanelRoot.transform.SetParent(canvasGo.transform, false);
+            Image bg = filterPanelRoot.AddComponent<Image>();
+            bg.color = new Color(0f, 0f, 0f, 0.45f);
+
+            RectTransform rt = filterPanelRoot.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.02f, 0.14f);
+            rt.anchorMax = new Vector2(0.20f, 0.90f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup vlg = filterPanelRoot.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = false;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.spacing = 10f;
+            vlg.padding = new RectOffset(10, 10, 12, 12);
+
+            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            GameObject searchGo = DefaultControls.CreateInputField(resources);
+            searchGo.name = "SearchInput";
+            searchGo.transform.SetParent(filterPanelRoot.transform, false);
+            searchInput = searchGo.GetComponent<InputField>();
+            Text searchPlaceholder = searchGo.transform.Find("Placeholder") != null ? searchGo.transform.Find("Placeholder").GetComponent<Text>() : null;
+            if (searchPlaceholder != null)
+            {
+                searchPlaceholder.font = font;
+                searchPlaceholder.text = "搜索";
+            }
+            Text searchTextComp = searchGo.transform.Find("Text") != null ? searchGo.transform.Find("Text").GetComponent<Text>() : null;
+            if (searchTextComp != null) searchTextComp.font = font;
+
+            GameObject rarityGo = DefaultControls.CreateDropdown(resources);
+            rarityGo.name = "RarityDropdown";
+            rarityGo.transform.SetParent(filterPanelRoot.transform, false);
+            rarityDropdown = rarityGo.GetComponent<Dropdown>();
+            if (rarityDropdown != null)
+            {
+                rarityDropdown.options = new List<Dropdown.OptionData>
+                {
+                    new Dropdown.OptionData("全部"),
+                    new Dropdown.OptionData("N"),
+                    new Dropdown.OptionData("R"),
+                    new Dropdown.OptionData("SR"),
+                    new Dropdown.OptionData("SSR")
+                };
+                Text caption = rarityGo.transform.Find("Label") != null ? rarityGo.transform.Find("Label").GetComponent<Text>() : null;
+                if (caption != null) caption.font = font;
+            }
+
+            GameObject sortGo = DefaultControls.CreateDropdown(resources);
+            sortGo.name = "SortDropdown";
+            sortGo.transform.SetParent(filterPanelRoot.transform, false);
+            sortDropdown = sortGo.GetComponent<Dropdown>();
+            if (sortDropdown != null)
+            {
+                sortDropdown.options = new List<Dropdown.OptionData>
+                {
+                    new Dropdown.OptionData("稀有度"),
+                    new Dropdown.OptionData("名称"),
+                    new Dropdown.OptionData("收藏优先")
+                };
+                Text caption = sortGo.transform.Find("Label") != null ? sortGo.transform.Find("Label").GetComponent<Text>() : null;
+                if (caption != null) caption.font = font;
+            }
+
+            GameObject favGo = DefaultControls.CreateToggle(resources);
+            favGo.name = "FavoritesOnly";
+            favGo.transform.SetParent(filterPanelRoot.transform, false);
+            favoritesOnlyToggle = favGo.GetComponent<Toggle>();
+            Text favLabel = favGo.GetComponentInChildren<Text>();
+            if (favLabel != null)
+            {
+                favLabel.font = font;
+                favLabel.text = "仅收藏";
+            }
+
+            GameObject ownedGo = DefaultControls.CreateToggle(resources);
+            ownedGo.name = "OwnedOnly";
+            ownedGo.transform.SetParent(filterPanelRoot.transform, false);
+            ownedOnlyToggle = ownedGo.GetComponent<Toggle>();
+            Text ownedLabel = ownedGo.GetComponentInChildren<Text>();
+            if (ownedLabel != null)
+            {
+                ownedLabel.font = font;
+                ownedLabel.text = "仅拥有";
+            }
+
+            GameObject chipsTitleGo = new GameObject("TagsTitle");
+            chipsTitleGo.transform.SetParent(filterPanelRoot.transform, false);
+            Text chipsTitle = chipsTitleGo.AddComponent<Text>();
+            chipsTitle.font = font;
+            chipsTitle.text = "标签";
+            chipsTitle.fontSize = 18;
+            chipsTitle.alignment = TextAnchor.MiddleLeft;
+            chipsTitle.color = new Color(1f, 0.86f, 0.97f);
+            RectTransform chipsTitleRt = chipsTitleGo.GetComponent<RectTransform>();
+            chipsTitleRt.sizeDelta = new Vector2(0, 28);
+
+            GameObject chipsGo = new GameObject("TagChips");
+            chipsGo.transform.SetParent(filterPanelRoot.transform, false);
+            tagChipsRoot = chipsGo.transform;
+            GridLayoutGroup chipsGrid = chipsGo.AddComponent<GridLayoutGroup>();
+            chipsGrid.cellSize = new Vector2(120, 34);
+            chipsGrid.spacing = new Vector2(8, 8);
+            chipsGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            chipsGrid.constraintCount = 1;
+            RectTransform chipsRt = chipsGo.GetComponent<RectTransform>();
+            chipsRt.sizeDelta = new Vector2(0, 360);
+
+            filterPanelRoot.SetActive(false);
         }
 
         private void EnsurePresetBar(GameObject canvasGo, DefaultControls.Resources resources)
@@ -271,6 +427,14 @@ namespace DesktopPet.UI
                 if (Input.GetKeyDown(KeyCode.C)) dressUpManager.CycleMaterialVariant(lastEquippedType, -1);
                 if (Input.GetKeyDown(KeyCode.V)) dressUpManager.CycleMaterialVariant(lastEquippedType, 1);
             }
+
+            if (wardrobePanel != null && wardrobePanel.activeSelf && wardrobeScrollRect != null)
+            {
+                if (renderedCount < currentQuery.Count && wardrobeScrollRect.verticalNormalizedPosition <= 0.02f)
+                {
+                    RenderNextPage();
+                }
+            }
         }
 
         private void HandlePresetKey(int index, bool save)
@@ -344,6 +508,11 @@ namespace DesktopPet.UI
             {
                 presetBarRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
             }
+
+            if (filterPanelRoot != null)
+            {
+                filterPanelRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
+            }
         }
 
         private void RefreshCurrent()
@@ -351,19 +520,35 @@ namespace DesktopPet.UI
             EnsureGridLayout();
             ReleaseAllCards();
 
-            List<WardrobeItemDefinition> items = wardrobeManager != null
-                ? wardrobeManager.GetItems(currentCategory, searchText, favoritesOnly, ownedOnly, rarityFilter, tagFilter)
+            List<WardrobeItemDefinition> baseItems = wardrobeManager != null
+                ? wardrobeManager.GetItems(currentCategory, searchText, favoritesOnly, ownedOnly, rarityFilter, null, sortMode)
                 : new List<WardrobeItemDefinition>();
 
-            if (items == null || items.Count == 0) return;
+            BuildTagChips(baseItems);
 
-            for (int i = 0; i < items.Count; i++)
+            currentQuery.Clear();
+            if (wardrobeManager != null)
             {
-                WardrobeItemDefinition item = items[i];
+                currentQuery.AddRange(wardrobeManager.GetItems(currentCategory, searchText, favoritesOnly, ownedOnly, rarityFilter, tagFilter, sortMode));
+            }
+
+            renderedCount = 0;
+            RenderNextPage();
+        }
+
+        private void RenderNextPage()
+        {
+            if (contentContainer == null) return;
+            if (currentQuery.Count == 0) return;
+
+            int target = Mathf.Min(renderedCount + pageSize, currentQuery.Count);
+            for (int i = renderedCount; i < target; i++)
+            {
+                WardrobeItemDefinition item = currentQuery[i];
                 if (item == null || item.prefab == null) continue;
 
-                bool fav = wardrobeManager.Inventory != null && wardrobeManager.Inventory.IsFavorite(item.itemId);
-                bool owned = wardrobeManager.Inventory == null || wardrobeManager.Inventory.IsOwned(item.itemId);
+                bool fav = wardrobeManager != null && wardrobeManager.Inventory != null && wardrobeManager.Inventory.IsFavorite(item.itemId);
+                bool owned = wardrobeManager == null || wardrobeManager.Inventory == null || wardrobeManager.Inventory.IsOwned(item.itemId);
 
                 WardrobeCardView card = GetCard();
                 card.transform.SetParent(contentContainer, false);
@@ -390,6 +575,95 @@ namespace DesktopPet.UI
                         DesktopPet.Data.SaveManager.Instance.SaveData();
                     });
                 }
+
+                if (card.favoriteButton != null && wardrobeManager != null && wardrobeManager.Inventory != null)
+                {
+                    card.favoriteButton.onClick.RemoveAllListeners();
+                    card.favoriteButton.onClick.AddListener(() =>
+                    {
+                        wardrobeManager.Inventory.ToggleFavorite(item.itemId);
+                        bool nowFav = wardrobeManager.Inventory.IsFavorite(item.itemId);
+                        if (card.favoriteRoot != null) card.favoriteRoot.SetActive(nowFav);
+                    });
+                }
+            }
+
+            renderedCount = target;
+        }
+
+        private void BuildTagChips(List<WardrobeItemDefinition> items)
+        {
+            if (tagChipsRoot == null) return;
+
+            tagChipButtons.Clear();
+            tagChipTags.Clear();
+            for (int i = tagChipsRoot.childCount - 1; i >= 0; i--)
+            {
+                Destroy(tagChipsRoot.GetChild(i).gameObject);
+            }
+
+            HashSet<string> tags = new HashSet<string>();
+            if (items != null)
+            {
+                for (int i = 0; i < items.Count; i++)
+                {
+                    WardrobeItemDefinition item = items[i];
+                    if (item == null || item.tags == null) continue;
+                    for (int t = 0; t < item.tags.Count; t++)
+                    {
+                        string tag = item.tags[t];
+                        if (!string.IsNullOrEmpty(tag)) tags.Add(tag);
+                    }
+                }
+            }
+
+            tagFilter.RemoveAll(t => !tags.Contains(t));
+
+            if (tags.Count == 0) return;
+
+            DefaultControls.Resources resources = new DefaultControls.Resources();
+            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            foreach (string tag in tags)
+            {
+                GameObject chipGo = DefaultControls.CreateButton(resources);
+                chipGo.name = $"Tag_{tag}";
+                chipGo.transform.SetParent(tagChipsRoot, false);
+
+                Text text = chipGo.GetComponentInChildren<Text>();
+                if (text != null)
+                {
+                    text.font = font;
+                    text.text = tag;
+                    text.fontSize = 16;
+                    text.color = Color.white;
+                }
+
+                Image bg = chipGo.GetComponent<Image>();
+                if (bg != null)
+                {
+                    bg.color = tagFilter.Contains(tag) ? new Color(0.95f, 0.55f, 0.85f, 0.85f) : new Color(0.25f, 0.20f, 0.30f, 0.65f);
+                }
+
+                Button btn = chipGo.GetComponent<Button>();
+                if (btn != null)
+                {
+                    btn.onClick.AddListener(() =>
+                    {
+                        if (tagFilter.Contains(tag))
+                        {
+                            tagFilter.Remove(tag);
+                        }
+                        else
+                        {
+                            tagFilter.Add(tag);
+                        }
+                        RefreshCurrent();
+                    });
+                }
+
+                tagChipButtons.Add(btn);
+                tagChipTags.Add(tag);
             }
         }
 
@@ -473,6 +747,22 @@ namespace DesktopPet.UI
             iconRt.offsetMax = Vector2.zero;
             icon.preserveAspect = true;
 
+            GameObject shineGo = new GameObject("SsrShine");
+            shineGo.transform.SetParent(iconGo.transform, false);
+            RectTransform shineRt = shineGo.AddComponent<RectTransform>();
+            shineRt.anchorMin = new Vector2(0.5f, 0.5f);
+            shineRt.anchorMax = new Vector2(0.5f, 0.5f);
+            shineRt.sizeDelta = new Vector2(90f, 420f);
+            shineRt.anchoredPosition = new Vector2(-200f, 0f);
+            shineRt.localRotation = Quaternion.Euler(0f, 0f, 25f);
+            Image shineImg = shineGo.AddComponent<Image>();
+            shineImg.raycastTarget = false;
+            shineImg.color = new Color(1f, 0.95f, 0.7f, 0f);
+            WardrobeSsrShine shine = shineGo.AddComponent<WardrobeSsrShine>();
+            shine.shineRect = shineRt;
+            shine.shineImage = shineImg;
+            shine.enabled = false;
+
             GameObject nameGo = new GameObject("Name");
             nameGo.transform.SetParent(root.transform, false);
             Text nameText = nameGo.AddComponent<Text>();
@@ -491,6 +781,7 @@ namespace DesktopPet.UI
             Image favBg = favGo.AddComponent<Image>();
             favBg.type = Image.Type.Sliced;
             favBg.color = new Color(1f, 0.82f, 0.25f, 0.95f);
+            Button favBtn = favGo.AddComponent<Button>();
             RectTransform favRt = favGo.GetComponent<RectTransform>();
             favRt.anchorMin = new Vector2(0.80f, 0.84f);
             favRt.anchorMax = new Vector2(0.96f, 0.98f);
@@ -541,8 +832,10 @@ namespace DesktopPet.UI
             view.frameImage = frame;
             view.iconImage = icon;
             view.nameText = nameText;
+            view.favoriteButton = favBtn;
             view.favoriteRoot = favGo;
             view.lockRoot = lockGo;
+            view.ssrShine = shine;
 
             favGo.SetActive(false);
             lockGo.SetActive(false);
