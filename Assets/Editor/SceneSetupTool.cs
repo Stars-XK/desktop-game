@@ -18,6 +18,12 @@ namespace DesktopPet.EditorTools
         [MenuItem("DesktopPet/一键初始化主场景 (Setup Main Scene)")]
         public static void SetupMainScene()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("桌面宠物初始化", "请先退出 Play 模式，再执行“一键初始化主场景”。", "确定");
+                return;
+            }
+
             // 1. Create a new scene
             Scene newScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             newScene.name = "MainScene";
