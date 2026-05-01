@@ -67,6 +67,7 @@ namespace DesktopPet.EditorTools
                     item.clothingType = part.clothingType;
                     item.rarity = ItemRarity.R;
                     item.prefab = prefab;
+                    ApplyAutoTags(item);
                     EditorUtility.SetDirty(item);
 
                     catalog.items.Add(item);
@@ -76,6 +77,79 @@ namespace DesktopPet.EditorTools
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static void ApplyAutoTags(WardrobeItemDefinition item)
+        {
+            if (item == null) return;
+            if (item.tags == null) item.tags = new List<string>();
+
+            switch (item.clothingType)
+            {
+                case ClothingType.Hair:
+                    AddTagIfMissing(item.tags, "发型");
+                    break;
+                case ClothingType.Top:
+                    AddTagIfMissing(item.tags, "上衣");
+                    break;
+                case ClothingType.Bottom:
+                    AddTagIfMissing(item.tags, "下装");
+                    break;
+                case ClothingType.Shoes:
+                    AddTagIfMissing(item.tags, "鞋子");
+                    break;
+                case ClothingType.Accessory:
+                    AddTagIfMissing(item.tags, "配饰");
+                    break;
+                case ClothingType.FullBody:
+                    AddTagIfMissing(item.tags, "整套");
+                    break;
+            }
+
+            string k = (item.itemId ?? "").ToLowerInvariant();
+            string n = (item.displayName ?? "").ToLowerInvariant();
+            string combined = k + " " + n;
+
+            if (combined.Contains("sword") || combined.Contains("dagger"))
+            {
+                AddTagIfMissing(item.tags, "武器");
+            }
+
+            if (combined.Contains("helmet"))
+            {
+                AddTagIfMissing(item.tags, "头饰");
+            }
+
+            if (combined.Contains("staff"))
+            {
+                AddTagIfMissing(item.tags, "法杖");
+            }
+
+            if (combined.Contains("shield"))
+            {
+                AddTagIfMissing(item.tags, "盾");
+            }
+
+            if (combined.Contains("book") || combined.Contains("scroll"))
+            {
+                AddTagIfMissing(item.tags, "魔法");
+            }
+
+            if (combined.Contains("gems") || combined.Contains("gem"))
+            {
+                AddTagIfMissing(item.tags, "宝石");
+            }
+
+            if (combined.Contains("barrel") || combined.Contains("chest") || combined.Contains("rollofpaper") || combined.Contains("roll_of_paper"))
+            {
+                AddTagIfMissing(item.tags, "道具");
+            }
+        }
+
+        private static void AddTagIfMissing(List<string> tags, string tag)
+        {
+            if (tags == null || string.IsNullOrEmpty(tag)) return;
+            if (!tags.Contains(tag)) tags.Add(tag);
         }
 
         private static string SanitizeFileName(string value)
@@ -110,4 +184,3 @@ namespace DesktopPet.EditorTools
         }
     }
 }
-
