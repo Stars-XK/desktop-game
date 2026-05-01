@@ -1,9 +1,11 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using DesktopPet.Data;
 using DesktopPet.DressUp;
 using DesktopPet.UI;
 using DesktopPet.AI;
+using DesktopPet.Wardrobe;
 
 namespace DesktopPet.Core
 {
