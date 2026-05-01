@@ -55,6 +55,8 @@ namespace DesktopPet.EditorTools
             var aiManager = gameManagerObj.AddComponent<AIManager>();
             var llmProvider = gameManagerObj.AddComponent<OpenAILLMProvider>();
             var ttsProvider = gameManagerObj.AddComponent<AzureTTSProvider>();
+            var localClipProvider = gameManagerObj.AddComponent<LocalClipTTSProvider>();
+            var ttsRouter = gameManagerObj.AddComponent<TTSRouter>();
             var alarmManager = gameManagerObj.AddComponent<AlarmManager>();
             var interactionManager = gameManagerObj.AddComponent<InteractionManager>();
             var petBehavior = gameManagerObj.AddComponent<PetBehavior>();
@@ -82,7 +84,11 @@ namespace DesktopPet.EditorTools
             wardrobeManager.bundleLoader = assetBundleLoader;
 
             aiManager.llmProviderComponent = llmProvider;
-            aiManager.ttsProviderComponent = ttsProvider;
+            localClipProvider.library = AssetDatabase.LoadAssetAtPath<LocalVoiceLibrary>("Assets/Audio/LocalVoiceLibrary.asset");
+            ttsRouter.localProviderComponent = localClipProvider;
+            ttsRouter.remoteProviderComponent = ttsProvider;
+
+            aiManager.ttsProviderComponent = ttsRouter;
             aiManager.uiManager = uiManager;
 
             alarmManager.aiManager = aiManager;
