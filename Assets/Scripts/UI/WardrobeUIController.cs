@@ -46,6 +46,7 @@ namespace DesktopPet.UI
         private GameObject filterPanelRoot;
         private Transform tagChipsRoot;
         private Dropdown sortDropdown;
+        private GameObject dyePanelRoot;
         private ScrollRect wardrobeScrollRect;
         private readonly List<Button> tagChipButtons = new List<Button>();
         private readonly List<string> tagChipTags = new List<string>();
@@ -204,6 +205,168 @@ namespace DesktopPet.UI
 
             EnsureFilterPanel(canvasGo, resources);
             EnsurePresetBar(canvasGo, resources);
+            EnsureDyePanel(canvasGo, resources);
+        }
+
+        private void EnsureDyePanel(GameObject canvasGo, DefaultControls.Resources resources)
+        {
+            if (dyePanelRoot != null) return;
+
+            dyePanelRoot = new GameObject("WardrobeDyePanel");
+            dyePanelRoot.transform.SetParent(canvasGo.transform, false);
+            Image bg = dyePanelRoot.AddComponent<Image>();
+            bg.color = new Color(0f, 0f, 0f, 0.45f);
+
+            RectTransform rt = dyePanelRoot.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.80f, 0.14f);
+            rt.anchorMax = new Vector2(0.98f, 0.90f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            VerticalLayoutGroup vlg = dyePanelRoot.AddComponent<VerticalLayoutGroup>();
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = false;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+            vlg.spacing = 10f;
+            vlg.padding = new RectOffset(10, 10, 12, 12);
+
+            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            GameObject titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(dyePanelRoot.transform, false);
+            Text title = titleGo.AddComponent<Text>();
+            title.font = font;
+            title.text = "染色";
+            title.fontSize = 18;
+            title.alignment = TextAnchor.MiddleLeft;
+            title.color = new Color(1f, 0.86f, 0.97f);
+            RectTransform titleRt = titleGo.GetComponent<RectTransform>();
+            titleRt.sizeDelta = new Vector2(0, 28);
+
+            GameObject colorGridGo = new GameObject("ColorGrid");
+            colorGridGo.transform.SetParent(dyePanelRoot.transform, false);
+            GridLayoutGroup colorGrid = colorGridGo.AddComponent<GridLayoutGroup>();
+            colorGrid.cellSize = new Vector2(80, 34);
+            colorGrid.spacing = new Vector2(8, 8);
+            colorGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            colorGrid.constraintCount = 2;
+            RectTransform colorGridRt = colorGridGo.GetComponent<RectTransform>();
+            colorGridRt.sizeDelta = new Vector2(0, 220);
+
+            List<string> colors = WardrobeVariants.GetDefaultColorVariantIdsForCards();
+            for (int i = 0; i < colors.Count; i++)
+            {
+                string id = colors[i];
+                GameObject btnGo = DefaultControls.CreateButton(resources);
+                btnGo.name = "Color_" + id;
+                btnGo.transform.SetParent(colorGridGo.transform, false);
+                Text t = btnGo.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.font = font;
+                    t.text = WardrobeVariants.GetColorDisplayName(id);
+                    t.fontSize = 16;
+                    t.color = Color.white;
+                }
+                Button b = btnGo.GetComponent<Button>();
+                if (b != null)
+                {
+                    b.onClick.AddListener(() =>
+                    {
+                        if (dressUpManager != null) dressUpManager.SetColorVariant(lastEquippedType, id);
+                    });
+                }
+            }
+
+            GameObject matTitleGo = new GameObject("MatTitle");
+            matTitleGo.transform.SetParent(dyePanelRoot.transform, false);
+            Text matTitle = matTitleGo.AddComponent<Text>();
+            matTitle.font = font;
+            matTitle.text = "材质";
+            matTitle.fontSize = 18;
+            matTitle.alignment = TextAnchor.MiddleLeft;
+            matTitle.color = new Color(1f, 0.86f, 0.97f);
+            RectTransform matTitleRt = matTitleGo.GetComponent<RectTransform>();
+            matTitleRt.sizeDelta = new Vector2(0, 28);
+
+            GameObject matGridGo = new GameObject("MaterialGrid");
+            matGridGo.transform.SetParent(dyePanelRoot.transform, false);
+            GridLayoutGroup matGrid = matGridGo.AddComponent<GridLayoutGroup>();
+            matGrid.cellSize = new Vector2(80, 34);
+            matGrid.spacing = new Vector2(8, 8);
+            matGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            matGrid.constraintCount = 2;
+            RectTransform matGridRt = matGridGo.GetComponent<RectTransform>();
+            matGridRt.sizeDelta = new Vector2(0, 120);
+
+            List<string> mats = WardrobeVariants.GetDefaultMaterialVariantIdsForCards();
+            for (int i = 0; i < mats.Count; i++)
+            {
+                string id = mats[i];
+                GameObject btnGo = DefaultControls.CreateButton(resources);
+                btnGo.name = "Mat_" + id;
+                btnGo.transform.SetParent(matGridGo.transform, false);
+                Text t = btnGo.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.font = font;
+                    t.text = WardrobeVariants.GetMaterialDisplayName(id);
+                    t.fontSize = 16;
+                    t.color = Color.white;
+                }
+                Button b = btnGo.GetComponent<Button>();
+                if (b != null)
+                {
+                    b.onClick.AddListener(() =>
+                    {
+                        if (dressUpManager != null) dressUpManager.SetMaterialVariant(lastEquippedType, id);
+                    });
+                }
+            }
+
+            GameObject outfitActionsGo = new GameObject("OutfitActions");
+            outfitActionsGo.transform.SetParent(dyePanelRoot.transform, false);
+            HorizontalLayoutGroup hlg = outfitActionsGo.AddComponent<HorizontalLayoutGroup>();
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
+            hlg.spacing = 8f;
+            RectTransform actionsRt = outfitActionsGo.GetComponent<RectTransform>();
+            actionsRt.sizeDelta = new Vector2(0, 46);
+
+            GameObject randomGo = DefaultControls.CreateButton(resources);
+            randomGo.name = "RandomOutfit";
+            randomGo.transform.SetParent(outfitActionsGo.transform, false);
+            Text randomText = randomGo.GetComponentInChildren<Text>();
+            if (randomText != null)
+            {
+                randomText.font = font;
+                randomText.text = "随机";
+                randomText.fontSize = 16;
+                randomText.color = Color.white;
+            }
+            Button randomBtn = randomGo.GetComponent<Button>();
+            if (randomBtn != null) randomBtn.onClick.AddListener(RandomOutfit);
+
+            GameObject recommendGo = DefaultControls.CreateButton(resources);
+            recommendGo.name = "RecommendOutfit";
+            recommendGo.transform.SetParent(outfitActionsGo.transform, false);
+            Text recText = recommendGo.GetComponentInChildren<Text>();
+            if (recText != null)
+            {
+                recText.font = font;
+                recText.text = "推荐";
+                recText.fontSize = 16;
+                recText.color = Color.white;
+            }
+            Button recBtn = recommendGo.GetComponent<Button>();
+            if (recBtn != null) recBtn.onClick.AddListener(RecommendOutfit);
+
+            dyePanelRoot.SetActive(false);
         }
 
         private void EnsureFilterPanel(GameObject canvasGo, DefaultControls.Resources resources)
@@ -513,6 +676,85 @@ namespace DesktopPet.UI
             {
                 filterPanelRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
             }
+
+            if (dyePanelRoot != null)
+            {
+                dyePanelRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
+            }
+        }
+
+        private void RandomOutfit()
+        {
+            if (wardrobeManager == null || dressUpManager == null) return;
+            if (wardrobeManager.Inventory == null) return;
+
+            bool allowFullBody = true;
+            if (allowFullBody)
+            {
+                List<WardrobeItemDefinition> full = wardrobeManager.GetItems(ClothingType.FullBody, "", false, true, null, null, WardrobeSortMode.RarityDesc);
+                if (full != null && full.Count > 0 && Random.value < 0.25f)
+                {
+                    EquipDefinition(full[Random.Range(0, full.Count)]);
+                    return;
+                }
+            }
+
+            EquipRandomFromType(ClothingType.Hair);
+            EquipRandomFromType(ClothingType.Top);
+            EquipRandomFromType(ClothingType.Bottom);
+            EquipRandomFromType(ClothingType.Shoes);
+            EquipRandomFromType(ClothingType.Accessory);
+        }
+
+        private void EquipRandomFromType(ClothingType type)
+        {
+            List<WardrobeItemDefinition> list = wardrobeManager.GetItems(type, "", false, true, null, null, WardrobeSortMode.RarityDesc);
+            if (list == null || list.Count == 0) return;
+            EquipDefinition(list[Random.Range(0, list.Count)]);
+        }
+
+        private void RecommendOutfit()
+        {
+            if (wardrobeManager == null || dressUpManager == null) return;
+            if (wardrobeManager.Inventory == null) return;
+
+            EquipBestFromType(ClothingType.Hair);
+            EquipBestFromType(ClothingType.Top);
+            EquipBestFromType(ClothingType.Bottom);
+            EquipBestFromType(ClothingType.Shoes);
+            EquipBestFromType(ClothingType.Accessory);
+        }
+
+        private void EquipBestFromType(ClothingType type)
+        {
+            List<string> tags = tagFilter != null && tagFilter.Count > 0 ? new List<string>(tagFilter) : null;
+            List<WardrobeItemDefinition> list = wardrobeManager.GetItems(type, "", false, true, null, tags, WardrobeSortMode.RarityDesc);
+            if (list == null || list.Count == 0)
+            {
+                list = wardrobeManager.GetItems(type, "", false, true, null, null, WardrobeSortMode.RarityDesc);
+            }
+            if (list == null || list.Count == 0) return;
+            EquipDefinition(list[0]);
+        }
+
+        private void EquipDefinition(WardrobeItemDefinition item)
+        {
+            if (item == null || item.prefab == null) return;
+
+            dressUpManager.EquipPart(item.prefab);
+            lastEquippedType = item.clothingType;
+
+            var data = DesktopPet.Data.SaveManager.Instance.CurrentData;
+            switch (item.clothingType)
+            {
+                case ClothingType.Hair: data.equippedHairId = item.itemId; break;
+                case ClothingType.Top: data.equippedTopId = item.itemId; break;
+                case ClothingType.Bottom: data.equippedBottomId = item.itemId; break;
+                case ClothingType.Shoes: data.equippedShoesId = item.itemId; break;
+                case ClothingType.Accessory: data.equippedAccessoryId = item.itemId; break;
+                case ClothingType.FullBody: data.equippedFullBodyId = item.itemId; break;
+            }
+            DesktopPet.Data.SaveManager.Instance.SaveData();
         }
 
         private void RefreshCurrent()
