@@ -792,7 +792,7 @@ namespace DesktopPet.UI
             favTextGo.transform.SetParent(favGo.transform, false);
             Text favText = favTextGo.AddComponent<Text>();
             favText.font = font;
-            favText.text = "★";
+            favText.text = "☆";
             favText.fontSize = 22;
             favText.alignment = TextAnchor.MiddleCenter;
             favText.color = new Color(0.55f, 0.25f, 0.55f);
@@ -827,6 +827,30 @@ namespace DesktopPet.UI
             lockTextRt.offsetMin = Vector2.zero;
             lockTextRt.offsetMax = Vector2.zero;
 
+            GameObject ssrBadgeGo = new GameObject("SsrBadge");
+            ssrBadgeGo.transform.SetParent(root.transform, false);
+            Image ssrBadgeBg = ssrBadgeGo.AddComponent<Image>();
+            ssrBadgeBg.color = new Color(1f, 0.82f, 0.25f, 0.95f);
+            RectTransform ssrBadgeRt = ssrBadgeGo.GetComponent<RectTransform>();
+            ssrBadgeRt.anchorMin = new Vector2(0.04f, 0.86f);
+            ssrBadgeRt.anchorMax = new Vector2(0.22f, 0.98f);
+            ssrBadgeRt.offsetMin = Vector2.zero;
+            ssrBadgeRt.offsetMax = Vector2.zero;
+
+            GameObject ssrBadgeTextGo = new GameObject("Text");
+            ssrBadgeTextGo.transform.SetParent(ssrBadgeGo.transform, false);
+            Text ssrBadgeText = ssrBadgeTextGo.AddComponent<Text>();
+            ssrBadgeText.font = font;
+            ssrBadgeText.text = "SSR";
+            ssrBadgeText.fontSize = 16;
+            ssrBadgeText.alignment = TextAnchor.MiddleCenter;
+            ssrBadgeText.color = new Color(0.45f, 0.18f, 0.45f);
+            RectTransform ssrBadgeTextRt = ssrBadgeTextGo.GetComponent<RectTransform>();
+            ssrBadgeTextRt.anchorMin = Vector2.zero;
+            ssrBadgeTextRt.anchorMax = Vector2.one;
+            ssrBadgeTextRt.offsetMin = Vector2.zero;
+            ssrBadgeTextRt.offsetMax = Vector2.zero;
+
             WardrobeCardView view = root.AddComponent<WardrobeCardView>();
             view.button = root.GetComponent<Button>();
             view.frameImage = frame;
@@ -834,11 +858,14 @@ namespace DesktopPet.UI
             view.nameText = nameText;
             view.favoriteButton = favBtn;
             view.favoriteRoot = favGo;
+            view.favoriteText = favText;
             view.lockRoot = lockGo;
             view.ssrShine = shine;
+            view.ssrBadgeRoot = ssrBadgeGo;
 
-            favGo.SetActive(false);
+            favGo.SetActive(true);
             lockGo.SetActive(false);
+            ssrBadgeGo.SetActive(false);
 
             if (wardrobePanel != null)
             {

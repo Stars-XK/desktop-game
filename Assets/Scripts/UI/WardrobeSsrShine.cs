@@ -6,6 +6,8 @@ namespace DesktopPet.UI
 {
     public class WardrobeSsrShine : MonoBehaviour
     {
+        private static Sprite gradientSprite;
+
         public RectTransform shineRect;
         public Image shineImage;
         public float duration = 1.2f;
@@ -15,6 +17,7 @@ namespace DesktopPet.UI
 
         private void OnEnable()
         {
+            EnsureGradient();
             if (routine == null)
             {
                 routine = StartCoroutine(Loop());
@@ -75,6 +78,36 @@ namespace DesktopPet.UI
                 yield return new WaitForSecondsRealtime(interval);
             }
         }
+
+        private void EnsureGradient()
+        {
+            if (shineImage == null) return;
+            if (shineImage.sprite != null) return;
+
+            if (gradientSprite == null)
+            {
+                Texture2D tex = new Texture2D(32, 256, TextureFormat.RGBA32, false);
+                tex.wrapMode = TextureWrapMode.Clamp;
+                tex.filterMode = FilterMode.Bilinear;
+
+                for (int y = 0; y < tex.height; y++)
+                {
+                    float v = y / (tex.height - 1f);
+                    float a = Mathf.Sin(v * Mathf.PI);
+                    Color c = new Color(1f, 0.95f, 0.7f, a);
+                    for (int x = 0; x < tex.width; x++)
+                    {
+                        tex.SetPixel(x, y, c);
+                    }
+                }
+
+                tex.Apply();
+                gradientSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+            }
+
+            shineImage.sprite = gradientSprite;
+            shineImage.type = Image.Type.Simple;
+            shineImage.preserveAspect = true;
+        }
     }
 }
-
