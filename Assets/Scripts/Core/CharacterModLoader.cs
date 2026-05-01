@@ -32,6 +32,25 @@ namespace DesktopPet.Core
             if (!Directory.Exists(modsDir))
             {
                 Debug.LogWarning("[角色加载器] 找不到 Mods 文件夹 (Mods directory not found).");
+                if (fallbackCharacterPrefab != null)
+                {
+                    if (currentCharacterInstance != null)
+                    {
+                        Destroy(currentCharacterInstance);
+                    }
+                    currentCharacterInstance = Instantiate(fallbackCharacterPrefab);
+                    currentCharacterInstance.name = fallbackCharacterPrefab.name;
+                    BindCharacterToSystems(currentCharacterInstance);
+                }
+                else
+                {
+                    if (currentCharacterInstance != null)
+                    {
+                        Destroy(currentCharacterInstance);
+                    }
+                    currentCharacterInstance = CreateRuntimePlaceholderCharacter();
+                    BindCharacterToSystems(currentCharacterInstance);
+                }
                 onComplete?.Invoke();
                 yield break;
             }

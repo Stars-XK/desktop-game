@@ -6,6 +6,9 @@ using DesktopPet.DressUp;
 using DesktopPet.UI;
 using DesktopPet.AI;
 using DesktopPet.Wardrobe;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DesktopPet.Core
 {
@@ -26,6 +29,7 @@ namespace DesktopPet.Core
         private void Awake()
         {
             EnsureWardrobeUIController();
+            EnsureEditorFallbackCharacter();
             EnsureEditorCameraVisible();
         }
 
@@ -106,6 +110,27 @@ namespace DesktopPet.Core
             if (cam.clearFlags == CameraClearFlags.SolidColor && cam.backgroundColor.a < 0.99f)
             {
                 cam.backgroundColor = new Color(0.62f, 0.72f, 0.92f, 1f);
+            }
+#endif
+        }
+
+        private void EnsureEditorFallbackCharacter()
+        {
+#if UNITY_EDITOR
+            if (characterLoader == null) return;
+            if (characterLoader.fallbackCharacterPrefab != null && characterLoader.fallbackCharacterPrefab.name.Contains("Kenney")) return;
+
+            GameObject kenney = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Prefabs/Characters/P_Kenney_Blocky_A.prefab");
+            if (kenney != null)
+            {
+                characterLoader.fallbackCharacterPrefab = kenney;
+                return;
+            }
+
+            if (characterLoader.fallbackCharacterPrefab == null)
+            {
+                GameObject sample = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Prefabs/Characters/P_SampleCharacter.prefab");
+                if (sample != null) characterLoader.fallbackCharacterPrefab = sample;
             }
 #endif
         }
