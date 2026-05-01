@@ -191,6 +191,26 @@ namespace DesktopPet.DressUp
             }
         }
 
+        public void SetColorVariant(ClothingType type, string colorId)
+        {
+            if (!equippedItemIds.TryGetValue(type, out string itemId) || string.IsNullOrEmpty(itemId)) return;
+            WardrobeVariants.SaveColorVariantId(itemId, colorId ?? "");
+            if (equippedParts.TryGetValue(type, out GameObject partInstance))
+            {
+                ApplyVariants(partInstance, itemId);
+            }
+        }
+
+        public void SetMaterialVariant(ClothingType type, string materialId)
+        {
+            if (!equippedItemIds.TryGetValue(type, out string itemId) || string.IsNullOrEmpty(itemId)) return;
+            WardrobeVariants.SaveMaterialVariantId(itemId, materialId ?? "");
+            if (equippedParts.TryGetValue(type, out GameObject partInstance))
+            {
+                ApplyVariants(partInstance, itemId);
+            }
+        }
+
         public void UnequipPart(ClothingType type)
         {
             if (equippedParts.TryGetValue(type, out GameObject part))
