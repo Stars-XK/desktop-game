@@ -23,6 +23,7 @@ namespace DesktopPet.Core
         private void Awake()
         {
             bundleLoader = GetComponent<AssetBundleLoader>();
+            if (mainCamera == null) mainCamera = Camera.main;
         }
 
         public IEnumerator LoadCharacterFromSaveCoroutine(Action onComplete)
@@ -51,6 +52,15 @@ namespace DesktopPet.Core
                     currentCharacterInstance.name = fallbackCharacterPrefab.name;
                     BindCharacterToSystems(currentCharacterInstance);
                 }
+                else
+                {
+                    if (currentCharacterInstance != null)
+                    {
+                        Destroy(currentCharacterInstance);
+                    }
+                    currentCharacterInstance = CreateRuntimePlaceholderCharacter();
+                    BindCharacterToSystems(currentCharacterInstance);
+                }
                 onComplete?.Invoke();
                 yield break;
             }
@@ -67,6 +77,26 @@ namespace DesktopPet.Core
 
             yield return new WaitUntil(() => isLoaded);
             onComplete?.Invoke();
+        }
+
+        private GameObject CreateRuntimePlaceholderCharacter()
+        {
+            GameObject root = new GameObject("P_RuntimePlaceholderCharacter");
+            root.transform.position = Vector3.zero;
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Body";
+            body.transform.SetParent(root.transform, false);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.8f, 1.4f, 0.8f);
+
+            GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            head.name = "Head";
+            head.transform.SetParent(root.transform, false);
+            head.transform.localPosition = new Vector3(0f, 1.7f, 0f);
+            head.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
+
+            return root;
         }
 
         private string FindFirstCharacterBundle(string modsDir)

@@ -21,6 +21,12 @@ namespace DesktopPet.Core
         [Header("加载界面 UI (Loading UI)")]
         public GameObject loadingScreen;
 
+        private void Awake()
+        {
+            EnsureWardrobeUIController();
+            EnsureEditorCameraVisible();
+        }
+
         private IEnumerator Start()
         {
             Debug.Log("[启动引导器] 应用程序启动中... (Application starting...)");
@@ -79,6 +85,29 @@ namespace DesktopPet.Core
             Debug.Log("[启动引导器] 应用程序初始化完成 (Application fully initialized).");
         }
 
+        private void EnsureWardrobeUIController()
+        {
+            if (wardrobeManager == null || dressUpManager == null) return;
+            WardrobeUIController ui = GetComponent<WardrobeUIController>();
+            if (ui == null) ui = gameObject.AddComponent<WardrobeUIController>();
+
+            ui.wardrobeManager = wardrobeManager;
+            ui.dressUpManager = dressUpManager;
+            ui.characterLoader = characterLoader;
+        }
+
+        private static void EnsureEditorCameraVisible()
+        {
+#if UNITY_EDITOR
+            Camera cam = Camera.main;
+            if (cam == null) return;
+            if (cam.clearFlags == CameraClearFlags.SolidColor && cam.backgroundColor.a < 0.99f)
+            {
+                cam.backgroundColor = new Color(0.62f, 0.72f, 0.92f, 1f);
+            }
+#endif
+        }
+
         private void ApplySavedClothes()
         {
             var data = saveManager.CurrentData;
@@ -99,6 +128,10 @@ namespace DesktopPet.Core
             if (!string.IsNullOrEmpty(data.equippedShoesId))
             {
                 EquipPartById(ClothingType.Shoes, data.equippedShoesId);
+            }
+            if (!string.IsNullOrEmpty(data.equippedFullBodyId))
+            {
+                EquipPartById(ClothingType.FullBody, data.equippedFullBodyId);
             }
         }
 

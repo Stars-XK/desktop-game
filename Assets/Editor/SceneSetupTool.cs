@@ -28,7 +28,7 @@ namespace DesktopPet.EditorTools
             Camera cam = cameraObj.AddComponent<Camera>();
             cameraObj.AddComponent<AudioListener>(); // Add AudioListener for AI TTS voice and SFX
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0, 0, 0, 0); // Transparent black
+            cam.backgroundColor = new Color(0.62f, 0.72f, 0.92f, 1f);
             cam.orthographic = false; // Perspective is usually fine for 3D, or you can switch to orthographic
             cameraObj.transform.position = new Vector3(0, 1.2f, -3f); // Position to view the character
 
@@ -80,7 +80,7 @@ namespace DesktopPet.EditorTools
             characterLoader.dressUpManager = dressUpManager;
             characterLoader.mainCamera = cam;
             characterLoader.clickableLayer = -1; // Default to everything
-            characterLoader.fallbackCharacterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Prefabs/Characters/P_Kenney_Blocky_A.prefab");
+            characterLoader.fallbackCharacterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/Prefabs/Characters/P_SampleCharacter.prefab");
 
             wardrobeManager.bundleLoader = assetBundleLoader;
 
