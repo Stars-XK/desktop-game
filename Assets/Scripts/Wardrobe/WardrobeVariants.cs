@@ -26,6 +26,54 @@ namespace DesktopPet.Wardrobe
             "metal"
         };
 
+        public static string GetColorDisplayName(string variantId)
+        {
+            switch (variantId)
+            {
+                case "white":
+                    return "白";
+                case "black":
+                    return "黑";
+                case "pink":
+                    return "粉";
+                case "blue":
+                    return "蓝";
+                case "purple":
+                    return "紫";
+                case "red":
+                    return "红";
+                case "gold":
+                    return "金";
+                default:
+                    return "默认";
+            }
+        }
+
+        public static string GetMaterialDisplayName(string variantId)
+        {
+            switch (variantId)
+            {
+                case "matte":
+                    return "哑光";
+                case "glossy":
+                    return "亮面";
+                case "metal":
+                    return "金属";
+                default:
+                    return "默认";
+            }
+        }
+
+        public static List<string> GetDefaultColorVariantIdsForCards()
+        {
+            return new List<string>(ColorVariantIds);
+        }
+
+        public static List<string> GetDefaultMaterialVariantIdsForCards()
+        {
+            return new List<string>(MaterialVariantIds);
+        }
+
         public static bool TryGetColor(string variantId, out Color color)
         {
             switch (variantId)
@@ -168,4 +216,3 @@ namespace DesktopPet.Wardrobe
         }
     }
 }
-
