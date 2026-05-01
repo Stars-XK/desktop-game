@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,6 +56,11 @@ namespace DesktopPet.UI
         private int pageSize = 40;
         private GameObject presetBarRoot;
         private readonly List<WardrobePresetSlotView> presetSlots = new List<WardrobePresetSlotView>();
+        private RectTransform drawerRootRt;
+        private CanvasGroup drawerCanvasGroup;
+        private float drawerWidth = 900f;
+        private bool drawerOpen;
+        private Coroutine drawerRoutine;
 
         private void Start()
         {
@@ -174,12 +180,52 @@ namespace DesktopPet.UI
                 esGo.AddComponent<StandaloneInputModule>();
             }
 
+            GameObject drawerRoot = new GameObject("WardrobeDrawer");
+            drawerRoot.transform.SetParent(canvasGo.transform, false);
+            Image drawerBg = drawerRoot.AddComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(drawerBg);
+            drawerRootRt = drawerRoot.GetComponent<RectTransform>();
+            drawerRootRt.anchorMin = new Vector2(1f, 0f);
+            drawerRootRt.anchorMax = new Vector2(1f, 1f);
+            drawerRootRt.pivot = new Vector2(1f, 0.5f);
+            drawerRootRt.sizeDelta = new Vector2(drawerWidth, 0f);
+            drawerRootRt.anchoredPosition = new Vector2(drawerWidth + 18f, 0f);
+
+            drawerCanvasGroup = drawerRoot.AddComponent<CanvasGroup>();
+            drawerCanvasGroup.alpha = 1f;
+            drawerCanvasGroup.blocksRaycasts = false;
+            drawerCanvasGroup.interactable = false;
+
+            GameObject closeBtnGo = DefaultControls.CreateButton(resources);
+            closeBtnGo.name = "CloseDrawerButton";
+            closeBtnGo.transform.SetParent(drawerRoot.transform, false);
+            RectTransform closeRt = closeBtnGo.GetComponent<RectTransform>();
+            closeRt.anchorMin = new Vector2(0.92f, 0.93f);
+            closeRt.anchorMax = new Vector2(0.98f, 0.985f);
+            closeRt.offsetMin = Vector2.zero;
+            closeRt.offsetMax = Vector2.zero;
+            Image closeBg = closeBtnGo.GetComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(closeBg);
+            Text closeText = closeBtnGo.GetComponentInChildren<Text>();
+            if (closeText != null)
+            {
+                closeText.text = "×";
+                closeText.fontSize = 28;
+                closeText.color = WardrobeThemeFactory.TextMain;
+            }
+            Button closeBtn = closeBtnGo.GetComponent<Button>();
+            if (closeBtn != null) closeBtn.onClick.AddListener(CloseDrawer);
+
             GameObject scrollView = DefaultControls.CreateScrollView(resources);
             scrollView.name = "WardrobePanel";
-            scrollView.transform.SetParent(canvasGo.transform, false);
+            scrollView.transform.SetParent(drawerRoot.transform, false);
 
             Image panelBg = scrollView.GetComponent<Image>();
-            if (panelBg != null) panelBg.color = new Color(0f, 0f, 0f, 0.55f);
+            if (panelBg != null)
+            {
+                WardrobeThemeFactory.ApplyGlassPanel(panelBg);
+                panelBg.color = Color.white;
+            }
 
             ScrollRect sr = scrollView.GetComponent<ScrollRect>();
             if (sr != null)
@@ -189,8 +235,8 @@ namespace DesktopPet.UI
             }
 
             RectTransform panelRt = scrollView.GetComponent<RectTransform>();
-            panelRt.anchorMin = new Vector2(0.22f, 0.14f);
-            panelRt.anchorMax = new Vector2(0.98f, 0.90f);
+            panelRt.anchorMin = new Vector2(0.32f, 0.14f);
+            panelRt.anchorMax = new Vector2(0.72f, 0.90f);
             panelRt.offsetMin = Vector2.zero;
             panelRt.offsetMax = Vector2.zero;
 
@@ -201,11 +247,11 @@ namespace DesktopPet.UI
             }
 
             wardrobePanel = scrollView;
-            wardrobePanel.SetActive(false);
+            wardrobePanel.SetActive(true);
 
-            EnsureFilterPanel(canvasGo, resources);
-            EnsurePresetBar(canvasGo, resources);
-            EnsureDyePanel(canvasGo, resources);
+            EnsureFilterPanel(drawerRoot, resources);
+            EnsurePresetBar(drawerRoot, resources);
+            EnsureDyePanel(drawerRoot, resources);
         }
 
         private void EnsureDyePanel(GameObject canvasGo, DefaultControls.Resources resources)
@@ -215,10 +261,10 @@ namespace DesktopPet.UI
             dyePanelRoot = new GameObject("WardrobeDyePanel");
             dyePanelRoot.transform.SetParent(canvasGo.transform, false);
             Image bg = dyePanelRoot.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0f, 0.45f);
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
 
             RectTransform rt = dyePanelRoot.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.80f, 0.14f);
+            rt.anchorMin = new Vector2(0.74f, 0.14f);
             rt.anchorMax = new Vector2(0.98f, 0.90f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
@@ -241,7 +287,7 @@ namespace DesktopPet.UI
             title.text = "染色";
             title.fontSize = 18;
             title.alignment = TextAnchor.MiddleLeft;
-            title.color = new Color(1f, 0.86f, 0.97f);
+            title.color = WardrobeThemeFactory.TextMain;
             RectTransform titleRt = titleGo.GetComponent<RectTransform>();
             titleRt.sizeDelta = new Vector2(0, 28);
 
@@ -287,7 +333,7 @@ namespace DesktopPet.UI
             matTitle.text = "材质";
             matTitle.fontSize = 18;
             matTitle.alignment = TextAnchor.MiddleLeft;
-            matTitle.color = new Color(1f, 0.86f, 0.97f);
+            matTitle.color = WardrobeThemeFactory.TextMain;
             RectTransform matTitleRt = matTitleGo.GetComponent<RectTransform>();
             matTitleRt.sizeDelta = new Vector2(0, 28);
 
@@ -366,7 +412,7 @@ namespace DesktopPet.UI
             Button recBtn = recommendGo.GetComponent<Button>();
             if (recBtn != null) recBtn.onClick.AddListener(RecommendOutfit);
 
-            dyePanelRoot.SetActive(false);
+            dyePanelRoot.SetActive(true);
         }
 
         private void EnsureFilterPanel(GameObject canvasGo, DefaultControls.Resources resources)
@@ -376,11 +422,11 @@ namespace DesktopPet.UI
             filterPanelRoot = new GameObject("WardrobeFilterPanel");
             filterPanelRoot.transform.SetParent(canvasGo.transform, false);
             Image bg = filterPanelRoot.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0f, 0.45f);
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
 
             RectTransform rt = filterPanelRoot.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.02f, 0.14f);
-            rt.anchorMax = new Vector2(0.20f, 0.90f);
+            rt.anchorMax = new Vector2(0.30f, 0.90f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
@@ -471,7 +517,7 @@ namespace DesktopPet.UI
             chipsTitle.text = "标签";
             chipsTitle.fontSize = 18;
             chipsTitle.alignment = TextAnchor.MiddleLeft;
-            chipsTitle.color = new Color(1f, 0.86f, 0.97f);
+            chipsTitle.color = WardrobeThemeFactory.TextMain;
             RectTransform chipsTitleRt = chipsTitleGo.GetComponent<RectTransform>();
             chipsTitleRt.sizeDelta = new Vector2(0, 28);
 
@@ -486,7 +532,7 @@ namespace DesktopPet.UI
             RectTransform chipsRt = chipsGo.GetComponent<RectTransform>();
             chipsRt.sizeDelta = new Vector2(0, 360);
 
-            filterPanelRoot.SetActive(false);
+            filterPanelRoot.SetActive(true);
         }
 
         private void EnsurePresetBar(GameObject canvasGo, DefaultControls.Resources resources)
@@ -496,11 +542,11 @@ namespace DesktopPet.UI
             presetBarRoot = new GameObject("WardrobePresetBar");
             presetBarRoot.transform.SetParent(canvasGo.transform, false);
             Image bg = presetBarRoot.AddComponent<Image>();
-            bg.color = new Color(0f, 0f, 0f, 0.45f);
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
 
             RectTransform rt = presetBarRoot.GetComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.2f, 0.02f);
-            rt.anchorMax = new Vector2(0.8f, 0.12f);
+            rt.anchorMin = new Vector2(0.02f, 0.02f);
+            rt.anchorMax = new Vector2(0.98f, 0.12f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
 
@@ -527,7 +573,7 @@ namespace DesktopPet.UI
                     t.font = font;
                     t.text = (i + 1).ToString();
                     t.fontSize = 20;
-                    t.color = new Color(1f, 0.86f, 0.97f);
+                    t.color = WardrobeThemeFactory.TextMain;
                 }
 
                 WardrobePresetSlotView view = slotBtn.AddComponent<WardrobePresetSlotView>();
@@ -547,7 +593,7 @@ namespace DesktopPet.UI
                 }
             }
 
-            presetBarRoot.SetActive(false);
+            presetBarRoot.SetActive(true);
         }
 
         private void Update()
@@ -571,7 +617,12 @@ namespace DesktopPet.UI
             if (Input.GetKeyDown(KeyCode.F9)) HandlePresetKey(8, shift);
             if (Input.GetKeyDown(KeyCode.F10)) HandlePresetKey(9, shift);
 
-            if (Input.GetKeyDown(KeyCode.O)) ToggleWardrobePanel();
+            if (Input.GetKeyDown(KeyCode.O)) ToggleDrawer();
+
+            if (Input.GetKeyDown(KeyCode.Escape) && drawerOpen)
+            {
+                CloseDrawer();
+            }
 
             if (Input.GetKeyDown(KeyCode.P))
             {
@@ -591,7 +642,7 @@ namespace DesktopPet.UI
                 if (Input.GetKeyDown(KeyCode.V)) dressUpManager.CycleMaterialVariant(lastEquippedType, 1);
             }
 
-            if (wardrobePanel != null && wardrobePanel.activeSelf && wardrobeScrollRect != null)
+            if (drawerOpen && wardrobeScrollRect != null)
             {
                 if (renderedCount < currentQuery.Count && wardrobeScrollRect.verticalNormalizedPosition <= 0.02f)
                 {
@@ -625,11 +676,6 @@ namespace DesktopPet.UI
         private void InitializeUI()
         {
             Debug.Log("[衣橱界面] 衣服加载完毕，初始化UI... (Wardrobe loaded, initializing UI...)");
-            if (wardrobePanel != null && !wardrobePanel.activeSelf)
-            {
-                ToggleWardrobePanel();
-            }
-
             // Show Top category by default
             ShowCategory(ClothingType.Top);
         }
@@ -665,27 +711,69 @@ namespace DesktopPet.UI
             }
         }
 
+        public bool IsDrawerOpen => drawerOpen;
+
+        public void OpenDrawer()
+        {
+            SetDrawerOpen(true);
+        }
+
+        public void CloseDrawer()
+        {
+            SetDrawerOpen(false);
+        }
+
+        public void ToggleDrawer()
+        {
+            SetDrawerOpen(!drawerOpen);
+        }
+
         public void ToggleWardrobePanel()
         {
-            if (wardrobePanel != null)
+            ToggleDrawer();
+        }
+
+        private void SetDrawerOpen(bool open)
+        {
+            if (drawerRootRt == null) return;
+            if (drawerRoutine != null)
             {
-                wardrobePanel.SetActive(!wardrobePanel.activeSelf);
+                StopCoroutine(drawerRoutine);
+                drawerRoutine = null;
             }
 
-            if (presetBarRoot != null)
+            drawerOpen = open;
+            if (drawerCanvasGroup != null)
             {
-                presetBarRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
+                drawerCanvasGroup.blocksRaycasts = open;
+                drawerCanvasGroup.interactable = open;
             }
 
-            if (filterPanelRoot != null)
-            {
-                filterPanelRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
-            }
+            float from = drawerRootRt.anchoredPosition.x;
+            float to = open ? 0f : drawerWidth + 18f;
+            drawerRoutine = StartCoroutine(AnimateDrawer(from, to));
 
-            if (dyePanelRoot != null)
+            WardrobeShowroomUI showroom = GetComponent<WardrobeShowroomUI>();
+            if (showroom != null) showroom.SetVisible(true);
+        }
+
+        private IEnumerator AnimateDrawer(float fromX, float toX)
+        {
+            float t = 0f;
+            float dur = 0.22f;
+            Vector2 p = drawerRootRt.anchoredPosition;
+            while (t < dur)
             {
-                dyePanelRoot.SetActive(wardrobePanel != null && wardrobePanel.activeSelf);
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / dur);
+                float s = 1f - Mathf.Pow(1f - a, 3f);
+                p.x = Mathf.Lerp(fromX, toX, s);
+                drawerRootRt.anchoredPosition = p;
+                yield return null;
             }
+            p.x = toX;
+            drawerRootRt.anchoredPosition = p;
+            drawerRoutine = null;
         }
 
         private void RandomOutfit()

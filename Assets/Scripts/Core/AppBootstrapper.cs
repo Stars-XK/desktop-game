@@ -29,6 +29,7 @@ namespace DesktopPet.Core
         private void Awake()
         {
             EnsureWardrobeUIController();
+            EnsureShowroomControllers();
             EnsureEditorFallbackCharacter();
             EnsureEditorCameraVisible();
         }
@@ -82,6 +83,8 @@ namespace DesktopPet.Core
                 ApplySavedClothes();
             }
 
+            BindShowroomTarget();
+
             // 4. Initialize UI and Inject Dependencies
             if (aiManager != null) aiManager.uiManager = uiManager;
             if (alarmManager != null) alarmManager.uiManager = uiManager;
@@ -100,6 +103,30 @@ namespace DesktopPet.Core
             ui.wardrobeManager = wardrobeManager;
             ui.dressUpManager = dressUpManager;
             ui.characterLoader = characterLoader;
+        }
+
+        private void EnsureShowroomControllers()
+        {
+            WardrobeShowroomUI showroom = GetComponent<WardrobeShowroomUI>();
+            if (showroom == null) showroom = gameObject.AddComponent<WardrobeShowroomUI>();
+            showroom.wardrobeUI = GetComponent<WardrobeUIController>();
+            showroom.uiManager = uiManager;
+
+            ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
+            if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
+            camCtl.cam = Camera.main;
+        }
+
+        private void BindShowroomTarget()
+        {
+            ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
+            if (camCtl == null) return;
+            if (camCtl.target != null) return;
+            if (dressUpManager == null) return;
+
+            Transform t = dressUpManager.rootBone != null ? dressUpManager.rootBone : null;
+            if (t != null && t.parent != null) t = t.parent;
+            camCtl.target = t;
         }
 
         private static void EnsureEditorCameraVisible()

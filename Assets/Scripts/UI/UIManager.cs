@@ -47,6 +47,8 @@ namespace DesktopPet.UI
             // Toggle Settings via Escape key
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                WardrobeUIController wardrobe = FindObjectOfType<WardrobeUIController>();
+                if (wardrobe != null && wardrobe.IsDrawerOpen) return;
                 ToggleSettingsPanel();
             }
         }
