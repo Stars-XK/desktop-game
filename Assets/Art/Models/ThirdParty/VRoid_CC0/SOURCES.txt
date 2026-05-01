@@ -1,0 +1,11 @@
+VRoid Studio CC0 models (VRM 0.x)
+Source: https://opengameart.org/content/vroid-studio-cc0-models
+License: CC0 1.0 https://creativecommons.org/publicdomain/zero/1.0/
+
+Files:
+- sendagaya_shino/Sendagaya Shino.vrm
+- base_female/Base_Female.vrm
+
+Note:
+- Unity 导入 VRM 需要安装 UniVRM（VRM.dev 官方 Unity 插件）。
+
