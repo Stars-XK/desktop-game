@@ -50,7 +50,7 @@ namespace DesktopPet.UI
         private ScrollRect wardrobeScrollRect;
         private readonly List<Button> tagChipButtons = new List<Button>();
         private readonly List<string> tagChipTags = new List<string>();
-        private readonly List<WardrobeItemDefinition> currentQuery = new List<WardrobeItemDefinition>();
+        private readonly List<WardrobeVirtualItem> currentQuery = new List<WardrobeVirtualItem>();
         private int renderedCount;
         private int pageSize = 40;
         private GameObject presetBarRoot;
@@ -771,11 +771,66 @@ namespace DesktopPet.UI
             currentQuery.Clear();
             if (wardrobeManager != null)
             {
-                currentQuery.AddRange(wardrobeManager.GetItems(currentCategory, searchText, favoritesOnly, ownedOnly, rarityFilter, tagFilter, sortMode));
+                List<WardrobeItemDefinition> filtered = wardrobeManager.GetItems(currentCategory, searchText, favoritesOnly, ownedOnly, rarityFilter, tagFilter, sortMode);
+                BuildVirtualQuery(filtered);
             }
 
             renderedCount = 0;
             RenderNextPage();
+        }
+
+        private void BuildVirtualQuery(List<WardrobeItemDefinition> baseItems)
+        {
+            if (baseItems == null) return;
+
+            List<string> colors = WardrobeVariants.GetDefaultColorVariantIdsForCards();
+            List<string> mats = WardrobeVariants.GetDefaultMaterialVariantIdsForCards();
+
+            for (int i = 0; i < baseItems.Count; i++)
+            {
+                WardrobeItemDefinition item = baseItems[i];
+                if (item == null) continue;
+
+                WardrobeVirtualItem baseVi = new WardrobeVirtualItem
+                {
+                    baseItem = item,
+                    colorVariantId = "",
+                    materialVariantId = "",
+                    virtualItemId = item.itemId,
+                    virtualDisplayName = item.displayName
+                };
+                currentQuery.Add(baseVi);
+
+                for (int c = 0; c < colors.Count; c++)
+                {
+                    string colorId = colors[c];
+                    if (string.IsNullOrEmpty(colorId) || colorId == "default") continue;
+                    WardrobeVirtualItem vi = new WardrobeVirtualItem
+                    {
+                        baseItem = item,
+                        colorVariantId = colorId,
+                        materialVariantId = "",
+                        virtualItemId = item.itemId + "|c:" + colorId,
+                        virtualDisplayName = item.displayName + "·" + WardrobeVariants.GetColorDisplayName(colorId)
+                    };
+                    currentQuery.Add(vi);
+                }
+
+                for (int m = 0; m < mats.Count; m++)
+                {
+                    string matId = mats[m];
+                    if (string.IsNullOrEmpty(matId) || matId == "default") continue;
+                    WardrobeVirtualItem vi = new WardrobeVirtualItem
+                    {
+                        baseItem = item,
+                        colorVariantId = "",
+                        materialVariantId = matId,
+                        virtualItemId = item.itemId + "|m:" + matId,
+                        virtualDisplayName = item.displayName + "·" + WardrobeVariants.GetMaterialDisplayName(matId)
+                    };
+                    currentQuery.Add(vi);
+                }
+            }
         }
 
         private void RenderNextPage()
@@ -786,7 +841,8 @@ namespace DesktopPet.UI
             int target = Mathf.Min(renderedCount + pageSize, currentQuery.Count);
             for (int i = renderedCount; i < target; i++)
             {
-                WardrobeItemDefinition item = currentQuery[i];
+                WardrobeVirtualItem vi = currentQuery[i];
+                WardrobeItemDefinition item = vi.baseItem;
                 if (item == null || item.prefab == null) continue;
 
                 bool fav = wardrobeManager != null && wardrobeManager.Inventory != null && wardrobeManager.Inventory.IsFavorite(item.itemId);
@@ -795,6 +851,10 @@ namespace DesktopPet.UI
                 WardrobeCardView card = GetCard();
                 card.transform.SetParent(contentContainer, false);
                 card.Bind(item, fav, owned);
+                if (card.nameText != null && !string.IsNullOrEmpty(vi.virtualDisplayName))
+                {
+                    card.nameText.text = vi.virtualDisplayName;
+                }
 
                 if (card.button != null)
                 {
@@ -815,6 +875,15 @@ namespace DesktopPet.UI
                             case ClothingType.FullBody: data.equippedFullBodyId = item.itemId; break;
                         }
                         DesktopPet.Data.SaveManager.Instance.SaveData();
+
+                        if (!string.IsNullOrEmpty(vi.colorVariantId))
+                        {
+                            dressUpManager.SetColorVariant(item.clothingType, vi.colorVariantId);
+                        }
+                        if (!string.IsNullOrEmpty(vi.materialVariantId))
+                        {
+                            dressUpManager.SetMaterialVariant(item.clothingType, vi.materialVariantId);
+                        }
                     });
                 }
 
