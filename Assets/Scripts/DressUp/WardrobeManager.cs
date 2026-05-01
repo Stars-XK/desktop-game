@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using DesktopPet.Core;
+using DesktopPet.Data;
+using DesktopPet.Wardrobe;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -16,12 +18,16 @@ namespace DesktopPet.DressUp
 
         [Header("系统引用 (System References)")]
         public AssetBundleLoader bundleLoader;
+        public SaveManager saveManager;
+        public WardrobeCatalog wardrobeCatalog;
 
         public bool loadFromAssetsInEditor = true;
         public string editorClothesFolder = "Assets/Art/Prefabs/Clothes";
 
         // Categorized clothing prefabs loaded from mods
         public Dictionary<ClothingType, List<ClothingPart>> AvailableClothes { get; private set; } = new Dictionary<ClothingType, List<ClothingPart>>();
+        public List<WardrobeItemDefinition> CatalogItems { get; private set; } = new List<WardrobeItemDefinition>();
+        public WardrobeInventory Inventory { get; private set; }
 
         public event Action OnWardrobeLoaded;
 
@@ -41,6 +47,13 @@ namespace DesktopPet.DressUp
             {
                 bundleLoader = GetComponent<AssetBundleLoader>();
             }
+
+            if (saveManager == null)
+            {
+                saveManager = SaveManager.Instance;
+            }
+
+            Inventory = new WardrobeInventory(saveManager);
         }
 
         public void Start()
@@ -51,8 +64,70 @@ namespace DesktopPet.DressUp
             {
                 LoadClothesFromAssetsInEditor();
             }
+
+            if (wardrobeCatalog == null)
+            {
+                wardrobeCatalog = AssetDatabase.LoadAssetAtPath<WardrobeCatalog>("Assets/Art/Wardrobe/WardrobeCatalog.asset");
+            }
 #endif
+            LoadCatalogItems();
             ScanAndLoadMods();
+        }
+
+        private void LoadCatalogItems()
+        {
+            CatalogItems.Clear();
+            if (wardrobeCatalog == null || wardrobeCatalog.items == null) return;
+
+            for (int i = 0; i < wardrobeCatalog.items.Count; i++)
+            {
+                WardrobeItemDefinition item = wardrobeCatalog.items[i];
+                if (item == null || string.IsNullOrEmpty(item.itemId) || item.prefab == null) continue;
+                CatalogItems.Add(item);
+                if (item.unlockByDefault)
+                {
+                    Inventory?.Grant(item.itemId);
+                }
+            }
+        }
+
+        public List<WardrobeItemDefinition> GetItems(ClothingType type, string searchText = "", bool favoritesOnly = false, bool ownedOnly = false)
+        {
+            List<WardrobeItemDefinition> result = new List<WardrobeItemDefinition>();
+
+            for (int i = 0; i < CatalogItems.Count; i++)
+            {
+                WardrobeItemDefinition item = CatalogItems[i];
+                if (item == null) continue;
+                if (item.clothingType != type) continue;
+
+                if (ownedOnly && Inventory != null && !Inventory.IsOwned(item.itemId)) continue;
+                if (favoritesOnly && Inventory != null && !Inventory.IsFavorite(item.itemId)) continue;
+
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    bool match = false;
+                    if (!string.IsNullOrEmpty(item.displayName) && item.displayName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) match = true;
+                    if (!match && item.tags != null)
+                    {
+                        for (int t = 0; t < item.tags.Count; t++)
+                        {
+                            string tag = item.tags[t];
+                            if (!string.IsNullOrEmpty(tag) && tag.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                match = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!match) continue;
+                }
+
+                result.Add(item);
+            }
+
+            return result;
         }
 
 #if UNITY_EDITOR
