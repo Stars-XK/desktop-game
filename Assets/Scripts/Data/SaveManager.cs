@@ -25,6 +25,7 @@ namespace DesktopPet.Data
         public string equippedBottomId = "";
         public string equippedShoesId = "";
         public string equippedAccessoryId = "";
+        public string equippedFullBodyId = "";
         
         public string selectedCharacterBundleName = ""; // The bundle name for the base character model
         
