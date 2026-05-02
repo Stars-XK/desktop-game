@@ -45,6 +45,9 @@ namespace DesktopPet.Data
         public string longTermSummary = "";
         public string factsJson = "{}";
         public long lastProactiveUnix = 0;
+        public string currentMood = "idle";
+        public long moodExpireUnix = 0;
+        public List<string> milestoneMemories = new List<string>();
 
         public List<string> ownedItemIds = new List<string>();
         public List<string> favoriteItemIds = new List<string>();
@@ -136,6 +139,9 @@ namespace DesktopPet.Data
             if (data.proactiveMinIntervalSeconds <= 10f) data.proactiveMinIntervalSeconds = 180f;
             if (data.longTermSummary == null) data.longTermSummary = "";
             if (string.IsNullOrEmpty(data.factsJson)) data.factsJson = "{}";
+            if (string.IsNullOrEmpty(data.currentMood)) data.currentMood = "idle";
+            if (data.milestoneMemories == null) data.milestoneMemories = new List<string>();
+            if (data.milestoneMemories.Count > 32) data.milestoneMemories.RemoveRange(32, data.milestoneMemories.Count - 32);
 
             if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
             if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
