@@ -1168,6 +1168,7 @@ namespace DesktopPet.UI
             GameObject root = DefaultControls.CreateButton(resources);
             root.name = "WardrobeCardTemplate";
             root.SetActive(false);
+            if (root.GetComponent<UIButtonFeedback>() == null) root.AddComponent<UIButtonFeedback>();
 
             RectTransform rt = root.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(240f, 300f);
@@ -1176,6 +1177,16 @@ namespace DesktopPet.UI
             frame.type = Image.Type.Sliced;
 
             Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+            GameObject backGo = new GameObject("Backplate");
+            backGo.transform.SetParent(root.transform, false);
+            Image back = backGo.AddComponent<Image>();
+            back.raycastTarget = false;
+            RectTransform backRt = backGo.GetComponent<RectTransform>();
+            backRt.anchorMin = new Vector2(0f, 0f);
+            backRt.anchorMax = new Vector2(1f, 1f);
+            backRt.offsetMin = new Vector2(6f, 6f);
+            backRt.offsetMax = new Vector2(-6f, -6f);
 
             GameObject iconGo = new GameObject("Icon");
             iconGo.transform.SetParent(root.transform, false);
@@ -1204,6 +1215,33 @@ namespace DesktopPet.UI
             shine.shineImage = shineImg;
             shine.enabled = false;
 
+            GameObject glowGo = new GameObject("SsrGlow");
+            glowGo.transform.SetParent(iconGo.transform, false);
+            Image glowImg = glowGo.AddComponent<Image>();
+            glowImg.raycastTarget = false;
+            glowImg.sprite = WardrobeRaritySkin.GetFrameSprite(ItemRarity.SSR);
+            glowImg.type = Image.Type.Sliced;
+            glowImg.color = new Color(1f, 0.82f, 0.25f, 0f);
+            RectTransform glowRt = glowGo.GetComponent<RectTransform>();
+            glowRt.anchorMin = new Vector2(0.06f, 0.18f);
+            glowRt.anchorMax = new Vector2(0.94f, 0.96f);
+            glowRt.offsetMin = Vector2.zero;
+            glowRt.offsetMax = Vector2.zero;
+            WardrobeSsrGlow glow = glowGo.AddComponent<WardrobeSsrGlow>();
+            glow.glowImage = glowImg;
+            glow.enabled = false;
+
+            GameObject sparkGo = new GameObject("SsrSparkles");
+            sparkGo.transform.SetParent(iconGo.transform, false);
+            RectTransform sparkRt = sparkGo.AddComponent<RectTransform>();
+            sparkRt.anchorMin = new Vector2(0.5f, 0.5f);
+            sparkRt.anchorMax = new Vector2(0.5f, 0.5f);
+            sparkRt.sizeDelta = new Vector2(200f, 160f);
+            sparkRt.anchoredPosition = new Vector2(0f, 20f);
+            WardrobeSsrSparkleUI spark = sparkGo.AddComponent<WardrobeSsrSparkleUI>();
+            spark.enabled = false;
+            sparkGo.SetActive(false);
+
             GameObject nameGo = new GameObject("Name");
             nameGo.transform.SetParent(root.transform, false);
             Text nameText = nameGo.AddComponent<Text>();
@@ -1223,6 +1261,7 @@ namespace DesktopPet.UI
             favBg.type = Image.Type.Sliced;
             favBg.color = new Color(1f, 0.82f, 0.25f, 0.95f);
             Button favBtn = favGo.AddComponent<Button>();
+            if (favGo.GetComponent<UIButtonFeedback>() == null) favGo.AddComponent<UIButtonFeedback>();
             RectTransform favRt = favGo.GetComponent<RectTransform>();
             favRt.anchorMin = new Vector2(0.80f, 0.84f);
             favRt.anchorMax = new Vector2(0.96f, 0.98f);
@@ -1271,7 +1310,9 @@ namespace DesktopPet.UI
             GameObject ssrBadgeGo = new GameObject("SsrBadge");
             ssrBadgeGo.transform.SetParent(root.transform, false);
             Image ssrBadgeBg = ssrBadgeGo.AddComponent<Image>();
-            ssrBadgeBg.color = new Color(1f, 0.82f, 0.25f, 0.95f);
+            ssrBadgeBg.sprite = WardrobeRaritySkin.GetFrameSprite(ItemRarity.SSR);
+            ssrBadgeBg.type = Image.Type.Sliced;
+            ssrBadgeBg.color = Color.white;
             RectTransform ssrBadgeRt = ssrBadgeGo.GetComponent<RectTransform>();
             ssrBadgeRt.anchorMin = new Vector2(0.04f, 0.86f);
             ssrBadgeRt.anchorMax = new Vector2(0.22f, 0.98f);
@@ -1304,9 +1345,16 @@ namespace DesktopPet.UI
             view.ssrShine = shine;
             view.ssrBadgeRoot = ssrBadgeGo;
 
+            WardrobeCardFX fx = root.AddComponent<WardrobeCardFX>();
+            fx.backplateImage = back;
+            fx.ssrGlow = glow;
+            fx.ssrSparkle = spark;
+            view.fx = fx;
+
             favGo.SetActive(true);
             lockGo.SetActive(false);
             ssrBadgeGo.SetActive(false);
+            sparkGo.SetActive(false);
 
             if (wardrobePanel != null)
             {

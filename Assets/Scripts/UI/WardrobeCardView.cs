@@ -16,6 +16,7 @@ namespace DesktopPet.UI
         public GameObject lockRoot;
         public WardrobeSsrShine ssrShine;
         public GameObject ssrBadgeRoot;
+        public WardrobeCardFX fx;
 
         public string itemId;
         public DesktopPet.DressUp.ClothingType clothingType;
@@ -25,7 +26,19 @@ namespace DesktopPet.UI
             itemId = item != null ? item.itemId : "";
             clothingType = item != null ? item.clothingType : DesktopPet.DressUp.ClothingType.Top;
 
-            if (frameImage != null) frameImage.color = item != null ? WardrobeRaritySkin.GetFrameColor(item.rarity) : Color.white;
+            if (frameImage != null)
+            {
+                if (item != null)
+                {
+                    frameImage.sprite = WardrobeRaritySkin.GetFrameSprite(item.rarity);
+                    frameImage.type = Image.Type.Sliced;
+                    frameImage.color = Color.white;
+                }
+                else
+                {
+                    frameImage.color = Color.white;
+                }
+            }
             if (nameText != null) nameText.text = item != null ? item.displayName : "";
             if (iconImage != null) iconImage.sprite = item != null ? item.icon : null;
 
@@ -34,6 +47,7 @@ namespace DesktopPet.UI
             if (lockRoot != null) lockRoot.SetActive(!isOwned);
             if (ssrShine != null) ssrShine.enabled = item != null && item.rarity == ItemRarity.SSR;
             if (ssrBadgeRoot != null) ssrBadgeRoot.SetActive(item != null && item.rarity == ItemRarity.SSR);
+            if (fx != null && item != null) fx.Apply(item.rarity);
 
             if (iconImage != null)
             {
