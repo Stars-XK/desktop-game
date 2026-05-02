@@ -48,11 +48,23 @@ namespace DesktopPet.UI
             }
         }
 
+        public void FocusChatInput()
+        {
+            if (chatPanel != null) chatPanel.SetActive(true);
+            if (chatInputField != null)
+            {
+                chatInputField.ActivateInputField();
+                chatInputField.Select();
+            }
+        }
+
         private void Update()
         {
             // Toggle Settings via Escape key
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                PetContextMenuController menu = FindObjectOfType<PetContextMenuController>();
+                if (menu != null && menu.IsOpen) return;
                 WardrobeUIController wardrobe = FindObjectOfType<WardrobeUIController>();
                 if (wardrobe != null && wardrobe.IsDrawerOpen) return;
                 ToggleSettingsPanel();

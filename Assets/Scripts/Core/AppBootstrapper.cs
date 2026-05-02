@@ -124,6 +124,14 @@ namespace DesktopPet.Core
             ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
             if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
             camCtl.cam = Camera.main;
+
+            PetContextMenuController ctx = GetComponent<PetContextMenuController>();
+            if (ctx == null) ctx = gameObject.AddComponent<PetContextMenuController>();
+            ctx.mainCamera = Camera.main;
+            ctx.characterLoader = characterLoader;
+            ctx.uiManager = uiManager;
+            ctx.wardrobeUI = GetComponent<WardrobeUIController>();
+            ctx.photoModeUI = GetComponent<PhotoModeUI>();
         }
 
         private void EnsureVoiceControllers()

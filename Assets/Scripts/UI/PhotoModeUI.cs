@@ -78,6 +78,14 @@ namespace DesktopPet.UI
         private Texture2D fullscreenTex;
         private Coroutine toastHideRoutine;
 
+        public void TogglePanel()
+        {
+            EnsureUI();
+            if (panel == null) return;
+            if (panel.activeSelf) ClosePanel();
+            else OpenPanel();
+        }
+
         private void Start()
         {
             EnsureUI();
