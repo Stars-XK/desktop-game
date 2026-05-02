@@ -30,8 +30,12 @@ namespace DesktopPet.Core
 
         public IEnumerator LoadCharacterFromSaveCoroutine(Action onComplete)
         {
+            string modsDir = bundleLoader != null ? bundleLoader.GetModsDirectory() : Path.Combine(Application.dataPath, "..", "Mods");
+            string savedBundleName = SaveManager.Instance != null && SaveManager.Instance.CurrentData != null ? SaveManager.Instance.CurrentData.selectedCharacterBundleName : "";
+            bool hasCharacterBundle = HasAnyCharacterBundle(modsDir, savedBundleName);
+
 #if UNITY_EDITOR
-            if (preferFallbackCharacterInEditor && fallbackCharacterPrefab != null)
+            if (!hasCharacterBundle && preferFallbackCharacterInEditor && fallbackCharacterPrefab != null)
             {
                 if (currentCharacterInstance != null)
                 {
@@ -45,7 +49,6 @@ namespace DesktopPet.Core
             }
 #endif
 
-            string modsDir = bundleLoader.GetModsDirectory();
             if (!Directory.Exists(modsDir))
             {
                 Debug.LogWarning("[角色加载器] 找不到 Mods 文件夹 (Mods directory not found).");
@@ -72,7 +75,6 @@ namespace DesktopPet.Core
                 yield break;
             }
 
-            string savedBundleName = SaveManager.Instance.CurrentData.selectedCharacterBundleName;
             string targetBundle = string.IsNullOrEmpty(savedBundleName) ? FindFirstCharacterBundle(modsDir) : savedBundleName;
 
             if (string.IsNullOrEmpty(targetBundle))
@@ -113,6 +115,28 @@ namespace DesktopPet.Core
 
             yield return new WaitUntil(() => isLoaded);
             onComplete?.Invoke();
+        }
+
+        private static bool HasAnyCharacterBundle(string modsDir, string selectedBundleName)
+        {
+            if (string.IsNullOrEmpty(modsDir)) return false;
+            if (!Directory.Exists(modsDir)) return false;
+
+            if (!string.IsNullOrEmpty(selectedBundleName))
+            {
+                string selectedPath = Path.Combine(modsDir, selectedBundleName);
+                if (File.Exists(selectedPath)) return true;
+            }
+
+            string[] files = Directory.GetFiles(modsDir, "character_*", SearchOption.TopDirectoryOnly);
+            for (int i = 0; i < files.Length; i++)
+            {
+                string name = Path.GetFileName(files[i]);
+                if (string.IsNullOrEmpty(name)) continue;
+                if (name.EndsWith(".manifest") || name.EndsWith(".meta")) continue;
+                return true;
+            }
+            return false;
         }
 
         private GameObject CreateRuntimePlaceholderCharacter()
