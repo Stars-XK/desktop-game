@@ -86,6 +86,7 @@ namespace DesktopPet.Core
             }
 
             BindShowroomTarget();
+            EnsureCharacterInteraction();
 
             // 4. Initialize UI and Inject Dependencies
             if (aiManager != null) aiManager.uiManager = uiManager;
@@ -161,6 +162,33 @@ namespace DesktopPet.Core
             Transform t = dressUpManager.rootBone != null ? dressUpManager.rootBone : null;
             if (t != null && t.parent != null) t = t.parent;
             camCtl.target = t;
+        }
+
+        private void EnsureCharacterInteraction()
+        {
+            if (dressUpManager == null) return;
+            Transform t = dressUpManager.rootBone != null ? dressUpManager.rootBone : null;
+            if (t != null && t.parent != null) t = t.parent;
+            if (t == null) return;
+
+            GameObject go = t.gameObject;
+            Collider col = go.GetComponent<Collider>();
+            if (col == null)
+            {
+                CapsuleCollider cc = go.AddComponent<CapsuleCollider>();
+                cc.center = new Vector3(0f, 1f, 0f);
+                cc.radius = 0.35f;
+                cc.height = 2.0f;
+            }
+
+            DesktopPet.Interaction.InteractionManager im = go.GetComponent<DesktopPet.Interaction.InteractionManager>();
+            if (im == null) im = go.AddComponent<DesktopPet.Interaction.InteractionManager>();
+
+            DesktopPet.Interaction.PetInteractionReactions react = go.GetComponent<DesktopPet.Interaction.PetInteractionReactions>();
+            if (react == null) react = go.AddComponent<DesktopPet.Interaction.PetInteractionReactions>();
+            react.aiManager = aiManager;
+            react.uiManager = uiManager;
+            react.interaction = im;
         }
 
         private static void EnsureEditorCameraVisible()
