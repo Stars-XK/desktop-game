@@ -19,6 +19,7 @@ namespace DesktopPet.AI
         [Header("记忆管理 (Memory)")]
         public int maxHistoryMessages = 10;
         private System.Collections.Generic.List<OpenAIMessage> chatHistory = new System.Collections.Generic.List<OpenAIMessage>();
+        private PersonaState personaState;
 
         [Serializable]
         private class OpenAIMessage
@@ -52,6 +53,11 @@ namespace DesktopPet.AI
             chatHistory.Add(new OpenAIMessage { role = "system", content = systemPrompt });
         }
 
+        public void SetPersonaState(PersonaState state)
+        {
+            personaState = state;
+        }
+
         public void SendMessageAsync(string message, Action<string, string> onSuccess, Action<string> onError)
         {
             if (string.IsNullOrEmpty(apiKey))
@@ -64,6 +70,8 @@ namespace DesktopPet.AI
 
         private IEnumerator SendRequestCoroutine(string userMessage, Action<string, string> onSuccess, Action<string> onError)
         {
+            RefreshSystemPrompt();
+
             // Add user message to history
             chatHistory.Add(new OpenAIMessage { role = "user", content = userMessage });
 
@@ -131,6 +139,34 @@ namespace DesktopPet.AI
                     cleanText = rawText.Substring(endBracket + 1).Trim();
                 }
             }
+        }
+
+        private void RefreshSystemPrompt()
+        {
+            if (chatHistory.Count == 0)
+            {
+                chatHistory.Add(new OpenAIMessage { role = "system", content = systemPrompt });
+                return;
+            }
+
+            string dynamic = systemPrompt;
+            if (personaState != null)
+            {
+                string petName = string.IsNullOrEmpty(personaState.petName) ? "小优" : personaState.petName;
+                string userNick = string.IsNullOrEmpty(personaState.userNickname) ? "你" : personaState.userNickname;
+                string style = string.IsNullOrEmpty(personaState.personaStyle) ? "温柔甜系，有点傲娇，爱打扮" : personaState.personaStyle;
+                string summary = personaState.longTermSummary ?? "";
+                string facts = string.IsNullOrEmpty(personaState.factsJson) ? "{}" : personaState.factsJson;
+
+                dynamic =
+                    systemPrompt + "\n\n" +
+                    $"【角色】你叫{petName}，对用户称呼“{userNick}”。风格：{style}。关系等级：Lv{personaState.relationshipLevel}。\n" +
+                    $"【长期记忆】{summary}\n" +
+                    $"【偏好/事实JSON】{facts}\n" +
+                    "输出要求：每次回复开头必须是 [emotion]，emotion 仅用英文小写。回复简短口语，带语气词。";
+            }
+
+            chatHistory[0].content = dynamic;
         }
     }
 }
