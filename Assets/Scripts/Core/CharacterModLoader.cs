@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using DesktopPet.Data;
 using DesktopPet.DressUp;
+using DesktopPet.UI;
 
 namespace DesktopPet.Core
 {
@@ -282,6 +283,7 @@ namespace DesktopPet.Core
             }
 
             EnsureClickableCollider(characterObj);
+            TryRebindShowroomCamera();
 
             // 2. Bind to HitTestProvider
             HitTestProvider hitTest = FindObjectOfType<HitTestProvider>();
@@ -304,6 +306,36 @@ namespace DesktopPet.Core
             }
             
             Debug.Log($"[角色加载器] 成功实例化人物 (Successfully instantiated character): {currentCharacterInstance.name}");
+        }
+
+        private void TryRebindShowroomCamera()
+        {
+            ShowroomCameraController camCtl = FindObjectOfType<ShowroomCameraController>();
+            if (camCtl == null) return;
+
+            Transform t = dressUpManager != null && dressUpManager.rootBone != null ? dressUpManager.rootBone : null;
+            if (t != null && t.parent != null) t = t.parent;
+            if (t != null) camCtl.target = t;
+
+            Bounds b;
+            bool hasBounds = TryGetAggregatedBounds(currentCharacterInstance, out b);
+            if (hasBounds)
+            {
+                float h = Mathf.Max(0.8f, b.size.y);
+                camCtl.targetOffset = new Vector3(0f, Mathf.Clamp(h * 0.55f, 0.9f, 1.6f), 0f);
+                camCtl.distance = Mathf.Clamp(h * 1.25f, camCtl.minDistance, camCtl.maxDistance);
+                camCtl.pitch = Mathf.Clamp(10f, camCtl.pitchMin, camCtl.pitchMax);
+                camCtl.yaw = 10f;
+            }
+            else
+            {
+                camCtl.ApplyFramingPreset(0);
+            }
+
+            ShowroomLightingRig lights = camCtl.GetComponent<ShowroomLightingRig>();
+            if (lights != null && t != null) lights.target = t;
+            AmbientSparkles sparkles = camCtl.GetComponent<AmbientSparkles>();
+            if (sparkles != null && t != null) sparkles.target = t;
         }
 
         private static bool TryGetAggregatedBounds(GameObject go, out Bounds b)

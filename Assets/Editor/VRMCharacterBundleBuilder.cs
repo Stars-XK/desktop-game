@@ -4,6 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using DesktopPet.Core;
+using DesktopPet.Data;
 
 namespace DesktopPet.EditorTools
 {
@@ -123,11 +124,38 @@ namespace DesktopPet.EditorTools
             string bundlePath = Path.Combine(modsDir, bundleName);
             if (File.Exists(bundlePath))
             {
+                TrySetDefaultCharacter(bundleName);
                 EditorUtility.RevealInFinder(bundlePath);
             }
             else
             {
                 EditorUtility.DisplayDialog("VRM 打包", $"BuildAssetBundles 完成，但未找到输出文件：{bundlePath}\n请检查 Console 日志。", "OK");
+            }
+        }
+
+        private static void TrySetDefaultCharacter(string bundleName)
+        {
+            if (string.IsNullOrEmpty(bundleName)) return;
+            try
+            {
+                string dir = Application.persistentDataPath;
+                if (string.IsNullOrEmpty(dir)) return;
+                string savePath = Path.Combine(dir, "PetSaveData.json");
+
+                PetSaveData data = null;
+                if (File.Exists(savePath))
+                {
+                    string json = File.ReadAllText(savePath);
+                    if (!string.IsNullOrEmpty(json)) data = JsonUtility.FromJson<PetSaveData>(json);
+                }
+                if (data == null) data = new PetSaveData();
+                data.selectedCharacterBundleName = bundleName;
+
+                Directory.CreateDirectory(dir);
+                File.WriteAllText(savePath, JsonUtility.ToJson(data));
+            }
+            catch
+            {
             }
         }
 
