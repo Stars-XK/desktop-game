@@ -21,6 +21,7 @@ namespace DesktopPet.Data
     public class PhotoModePresetData
     {
         public bool hasValue = false;
+        public string name = "";
         public int bg = 0;
         public int light = 0;
         public int framing = 0;
@@ -69,6 +70,8 @@ namespace DesktopPet.Data
         public PhotoModePresetData photoPresetA = new PhotoModePresetData();
         public PhotoModePresetData photoPresetB = new PhotoModePresetData();
         public PhotoModePresetData photoPresetC = new PhotoModePresetData();
+        public List<PhotoModePresetData> photoPresets = new List<PhotoModePresetData>();
+        public int selectedPhotoPresetIndex = 0;
 
         public List<string> ownedItemIds = new List<string>();
         public List<string> favoriteItemIds = new List<string>();
@@ -169,6 +172,29 @@ namespace DesktopPet.Data
             if (data.photoPresetA.poseTrigger == null) data.photoPresetA.poseTrigger = "idle";
             if (data.photoPresetB.poseTrigger == null) data.photoPresetB.poseTrigger = "idle";
             if (data.photoPresetC.poseTrigger == null) data.photoPresetC.poseTrigger = "idle";
+            if (data.photoPresetA.name == null) data.photoPresetA.name = "";
+            if (data.photoPresetB.name == null) data.photoPresetB.name = "";
+            if (data.photoPresetC.name == null) data.photoPresetC.name = "";
+            if (data.photoPresets == null) data.photoPresets = new List<PhotoModePresetData>();
+
+            if (data.photoPresets.Count == 0)
+            {
+                if (data.photoPresetA.hasValue) data.photoPresets.Add(CopyPhotoPreset(data.photoPresetA, string.IsNullOrEmpty(data.photoPresetA.name) ? "预设 A" : data.photoPresetA.name));
+                if (data.photoPresetB.hasValue) data.photoPresets.Add(CopyPhotoPreset(data.photoPresetB, string.IsNullOrEmpty(data.photoPresetB.name) ? "预设 B" : data.photoPresetB.name));
+                if (data.photoPresetC.hasValue) data.photoPresets.Add(CopyPhotoPreset(data.photoPresetC, string.IsNullOrEmpty(data.photoPresetC.name) ? "预设 C" : data.photoPresetC.name));
+                if (data.photoPresets.Count == 0) data.photoPresets.Add(new PhotoModePresetData { hasValue = true, name = "默认" });
+            }
+            for (int i = 0; i < data.photoPresets.Count; i++)
+            {
+                PhotoModePresetData p = data.photoPresets[i];
+                if (p == null) data.photoPresets[i] = p = new PhotoModePresetData { hasValue = true, name = "默认" };
+                if (p.name == null) p.name = "";
+                if (string.IsNullOrEmpty(p.poseTrigger)) p.poseTrigger = "idle";
+                if (string.IsNullOrEmpty(p.name)) p.name = "预设 " + (i + 1);
+                p.hasValue = true;
+            }
+            if (data.selectedPhotoPresetIndex < 0) data.selectedPhotoPresetIndex = 0;
+            if (data.selectedPhotoPresetIndex >= data.photoPresets.Count) data.selectedPhotoPresetIndex = Mathf.Max(0, data.photoPresets.Count - 1);
 
             if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
             if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
@@ -186,6 +212,27 @@ namespace DesktopPet.Data
                     data.outfitPresets.Add(new OutfitPresetData { name = $"预设 {i + 1}" });
                 }
             }
+        }
+
+        private static PhotoModePresetData CopyPhotoPreset(PhotoModePresetData src, string name)
+        {
+            if (src == null) return new PhotoModePresetData { hasValue = true, name = string.IsNullOrEmpty(name) ? "预设" : name };
+            return new PhotoModePresetData
+            {
+                hasValue = true,
+                name = string.IsNullOrEmpty(name) ? (src.name ?? "预设") : name,
+                bg = src.bg,
+                light = src.light,
+                framing = src.framing,
+                lens = src.lens,
+                filter = src.filter,
+                guides = src.guides,
+                poseTrigger = string.IsNullOrEmpty(src.poseTrigger) ? "idle" : src.poseTrigger,
+                blur = src.blur,
+                vignette = src.vignette,
+                saturation = src.saturation,
+                contrast = src.contrast
+            };
         }
     }
 }
