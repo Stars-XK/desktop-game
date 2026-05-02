@@ -163,15 +163,83 @@ namespace DesktopPet.Core
                 Destroy(currentCharacterInstance);
             }
 
-            // Instantiate the first prefab found in the bundle
-            GameObject prefabToSpawn = prefabs[0];
+            GameObject prefabToSpawn = SelectBestCharacterPrefab(prefabs);
+            if (prefabToSpawn == null) prefabToSpawn = prefabs[0];
+
             currentCharacterInstance = Instantiate(prefabToSpawn, Vector3.zero, Quaternion.identity);
             currentCharacterInstance.name = prefabToSpawn.name;
             currentCharacterInstance.transform.localScale = Vector3.one;
             currentCharacterInstance.SetActive(true);
 
+            if (currentCharacterInstance.GetComponentsInChildren<Renderer>(true).Length == 0)
+            {
+                GameObject alt = SelectBestCharacterPrefab(prefabs, prefabToSpawn);
+                if (alt != null)
+                {
+                    Destroy(currentCharacterInstance);
+                    currentCharacterInstance = Instantiate(alt, Vector3.zero, Quaternion.identity);
+                    currentCharacterInstance.name = alt.name;
+                    currentCharacterInstance.transform.localScale = Vector3.one;
+                    currentCharacterInstance.SetActive(true);
+                }
+            }
+
             // Bind the instantiated character to the existing systems
             BindCharacterToSystems(currentCharacterInstance);
+        }
+
+        private static GameObject SelectBestCharacterPrefab(GameObject[] prefabs, GameObject exclude = null)
+        {
+            if (prefabs == null || prefabs.Length == 0) return null;
+
+            GameObject best = null;
+            int bestScore = int.MinValue;
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                GameObject p = prefabs[i];
+                if (p == null) continue;
+                if (exclude != null && p == exclude) continue;
+
+                int score = ScoreCharacterPrefab(p);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = p;
+                }
+            }
+
+            if (bestScore <= 0) return null;
+            return best;
+        }
+
+        private static int ScoreCharacterPrefab(GameObject prefab)
+        {
+            if (prefab == null) return int.MinValue;
+
+            int score = 0;
+            SkinnedMeshRenderer[] smrs = prefab.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int i = 0; i < smrs.Length; i++)
+            {
+                var smr = smrs[i];
+                if (smr == null || smr.sharedMesh == null) continue;
+                score += 1000;
+                score += Mathf.Min(200, smr.sharedMesh.blendShapeCount);
+            }
+
+            MeshRenderer[] mrs = prefab.GetComponentsInChildren<MeshRenderer>(true);
+            for (int i = 0; i < mrs.Length; i++)
+            {
+                var mr = mrs[i];
+                if (mr == null) continue;
+                MeshFilter mf = mr.GetComponent<MeshFilter>();
+                if (mf == null || mf.sharedMesh == null) continue;
+                score += 600;
+            }
+
+            if (prefab.GetComponentInChildren<Animator>(true) != null) score += 50;
+            if (prefab.GetComponentInChildren<Renderer>(true) != null) score += 20;
+
+            return score;
         }
 
         private void BindCharacterToSystems(GameObject characterObj)
