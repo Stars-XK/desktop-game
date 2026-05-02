@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using DesktopPet.Animation;
 using DesktopPet.CameraSys;
+using DesktopPet.Data;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,8 +23,15 @@ namespace DesktopPet.UI
         private Button closeButton;
         private Button saveButton;
         private Button resetButton;
+        private Button presetSaveA;
+        private Button presetApplyA;
+        private Button presetSaveB;
+        private Button presetApplyB;
+        private Button presetSaveC;
+        private Button presetApplyC;
         private Button toastOpenButton;
         private Button toastCopyButton;
+        private Button toastShareButton;
         private Button toastCloseButton;
         private Dropdown bgDropdown;
         private Dropdown lightDropdown;
@@ -37,11 +45,14 @@ namespace DesktopPet.UI
         private Slider saturationSlider;
         private Slider contrastSlider;
         private Text toastText;
+        private RawImage toastPreview;
         private ShowroomCameraController camCtl;
         private PhotoModePostFX postFx;
         private string lastToastPath;
+        private string lastToastShare;
         private bool updatingUi;
         private static Sprite solidSprite;
+        private Texture2D toastPreviewTex;
 
         private void Start()
         {
@@ -174,6 +185,13 @@ namespace DesktopPet.UI
             resetButton = resetGo.GetComponent<Button>();
             if (resetGo.GetComponent<UIButtonFeedback>() == null) resetGo.AddComponent<UIButtonFeedback>();
 
+            presetSaveA = CreatePresetButton(panel.transform, resources, font, "存A", new Vector2(0.06f, 0.28f), new Vector2(0.16f, 0.34f));
+            presetApplyA = CreatePresetButton(panel.transform, resources, font, "用A", new Vector2(0.18f, 0.28f), new Vector2(0.28f, 0.34f));
+            presetSaveB = CreatePresetButton(panel.transform, resources, font, "存B", new Vector2(0.30f, 0.28f), new Vector2(0.40f, 0.34f));
+            presetApplyB = CreatePresetButton(panel.transform, resources, font, "用B", new Vector2(0.42f, 0.28f), new Vector2(0.52f, 0.34f));
+            presetSaveC = CreatePresetButton(panel.transform, resources, font, "存C", new Vector2(0.54f, 0.28f), new Vector2(0.64f, 0.34f));
+            presetApplyC = CreatePresetButton(panel.transform, resources, font, "用C", new Vector2(0.66f, 0.28f), new Vector2(0.76f, 0.34f));
+
             GameObject saveGo = DefaultControls.CreateButton(resources);
             saveGo.name = "SaveButton";
             saveGo.transform.SetParent(panel.transform, false);
@@ -232,6 +250,12 @@ namespace DesktopPet.UI
             if (saturationSlider != null) saturationSlider.onValueChanged.AddListener(OnSaturationChanged);
             if (contrastSlider != null) contrastSlider.onValueChanged.AddListener(OnContrastChanged);
             if (saveButton != null) saveButton.onClick.AddListener(OnSave);
+            if (presetSaveA != null) presetSaveA.onClick.AddListener(() => SavePreset(0));
+            if (presetApplyA != null) presetApplyA.onClick.AddListener(() => ApplyPreset(0));
+            if (presetSaveB != null) presetSaveB.onClick.AddListener(() => SavePreset(1));
+            if (presetApplyB != null) presetApplyB.onClick.AddListener(() => ApplyPreset(1));
+            if (presetSaveC != null) presetSaveC.onClick.AddListener(() => SavePreset(2));
+            if (presetApplyC != null) presetApplyC.onClick.AddListener(() => ApplyPreset(2));
 
             EnsureGuides();
             EnsureToast(font, resources);
@@ -327,6 +351,30 @@ namespace DesktopPet.UI
             s.maxValue = max;
             s.value = Mathf.Lerp(min, max, 0.5f);
             return s;
+        }
+
+        private static Button CreatePresetButton(Transform parent, DefaultControls.Resources resources, Font font, string label, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            GameObject go = DefaultControls.CreateButton(resources);
+            go.name = "Preset_" + label;
+            go.transform.SetParent(parent, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image bg = go.GetComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
+            Text t = go.GetComponentInChildren<Text>();
+            if (t != null)
+            {
+                t.font = font;
+                t.text = label;
+                t.fontSize = 16;
+                t.color = WardrobeThemeFactory.TextMain;
+            }
+            if (go.GetComponent<UIButtonFeedback>() == null) go.AddComponent<UIButtonFeedback>();
+            return go.GetComponent<Button>();
         }
 
         private void OnBackgroundChanged(int value)
@@ -497,6 +545,7 @@ namespace DesktopPet.UI
             if (framingDropdown != null) OnFramingChanged(framingDropdown.value);
             if (lensDropdown != null) OnLensChanged(lensDropdown.value);
             if (guidesDropdown != null) OnGuidesChanged(guidesDropdown.value);
+            lastToastShare = BuildShareText();
         }
 
         private void ClosePanel()
@@ -689,10 +738,21 @@ namespace DesktopPet.UI
             WardrobeThemeFactory.ApplyGlassPanel(bg);
             RectTransform rt = toastRoot.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.22f, 0.02f);
-            rt.anchorMax = new Vector2(0.78f, 0.18f);
+            rt.anchorMax = new Vector2(0.78f, 0.26f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             toastRoot.SetActive(false);
+
+            GameObject previewGo = new GameObject("Preview");
+            previewGo.transform.SetParent(toastRoot.transform, false);
+            toastPreview = previewGo.AddComponent<RawImage>();
+            toastPreview.raycastTarget = false;
+            RectTransform prt = previewGo.GetComponent<RectTransform>();
+            prt.anchorMin = new Vector2(0.02f, 0.18f);
+            prt.anchorMax = new Vector2(0.20f, 0.96f);
+            prt.offsetMin = Vector2.zero;
+            prt.offsetMax = Vector2.zero;
+            previewGo.SetActive(false);
 
             GameObject textGo = new GameObject("Text");
             textGo.transform.SetParent(toastRoot.transform, false);
@@ -703,17 +763,19 @@ namespace DesktopPet.UI
             toastText.alignment = TextAnchor.MiddleLeft;
             toastText.color = WardrobeThemeFactory.TextMain;
             RectTransform trt = textGo.GetComponent<RectTransform>();
-            trt.anchorMin = new Vector2(0.04f, 0.18f);
+            trt.anchorMin = new Vector2(0.22f, 0.18f);
             trt.anchorMax = new Vector2(0.96f, 0.98f);
             trt.offsetMin = Vector2.zero;
             trt.offsetMax = Vector2.zero;
 
-            toastOpenButton = CreateToastButton(resources, font, "打开文件夹", new Vector2(0.04f, 0.04f), new Vector2(0.34f, 0.22f));
-            toastCopyButton = CreateToastButton(resources, font, "复制路径", new Vector2(0.36f, 0.04f), new Vector2(0.66f, 0.22f));
-            toastCloseButton = CreateToastButton(resources, font, "关闭", new Vector2(0.68f, 0.04f), new Vector2(0.96f, 0.22f));
+            toastOpenButton = CreateToastButton(resources, font, "打开文件夹", new Vector2(0.02f, 0.04f), new Vector2(0.30f, 0.18f));
+            toastCopyButton = CreateToastButton(resources, font, "复制路径", new Vector2(0.32f, 0.04f), new Vector2(0.58f, 0.18f));
+            toastShareButton = CreateToastButton(resources, font, "复制文案", new Vector2(0.60f, 0.04f), new Vector2(0.80f, 0.18f));
+            toastCloseButton = CreateToastButton(resources, font, "关闭", new Vector2(0.82f, 0.04f), new Vector2(0.98f, 0.18f));
 
             if (toastOpenButton != null) toastOpenButton.onClick.AddListener(OpenToastFolder);
             if (toastCopyButton != null) toastCopyButton.onClick.AddListener(CopyToastPath);
+            if (toastShareButton != null) toastShareButton.onClick.AddListener(CopyToastShare);
             if (toastCloseButton != null) toastCloseButton.onClick.AddListener(() => toastRoot.SetActive(false));
         }
 
@@ -744,19 +806,23 @@ namespace DesktopPet.UI
         private void OnScreenshotSaved(string path)
         {
             lastToastPath = path;
+            lastToastShare = BuildShareText();
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null)
             {
                 string name = Path.GetFileName(path);
                 toastText.text = $"已保存：{name}\n{path}";
             }
+            SetToastPreview(path);
         }
 
         private void OnScreenshotFailed(string msg)
         {
             lastToastPath = "";
+            lastToastShare = "";
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null) toastText.text = $"保存失败：{msg}";
+            SetToastPreview(null);
         }
 
         private void OpenToastFolder()
@@ -772,6 +838,162 @@ namespace DesktopPet.UI
         {
             if (string.IsNullOrEmpty(lastToastPath)) return;
             GUIUtility.systemCopyBuffer = lastToastPath;
+        }
+
+        private void CopyToastShare()
+        {
+            if (string.IsNullOrEmpty(lastToastShare)) lastToastShare = BuildShareText();
+            if (string.IsNullOrEmpty(lastToastShare)) return;
+            GUIUtility.systemCopyBuffer = lastToastShare;
+        }
+
+        private string BuildShareText()
+        {
+            string pet = "小优";
+            if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null && !string.IsNullOrEmpty(SaveManager.Instance.CurrentData.petName))
+            {
+                pet = SaveManager.Instance.CurrentData.petName;
+            }
+
+            string filter = filterDropdown != null && filterDropdown.options.Count > 0 ? filterDropdown.options[filterDropdown.value].text : "原片";
+            string framing = framingDropdown != null && framingDropdown.options.Count > 0 ? framingDropdown.options[framingDropdown.value].text : "全身";
+            string lens = lensDropdown != null && lensDropdown.options.Count > 0 ? lensDropdown.options[lensDropdown.value].text : "50";
+            return $"{pet}｜{filter}｜{framing}｜{lens}";
+        }
+
+        private void SetToastPreview(string path)
+        {
+            if (toastPreview == null) return;
+
+            if (toastPreviewTex != null)
+            {
+                Destroy(toastPreviewTex);
+                toastPreviewTex = null;
+            }
+
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                toastPreview.texture = null;
+                toastPreview.gameObject.SetActive(false);
+                return;
+            }
+
+            byte[] bytes = File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!tex.LoadImage(bytes))
+            {
+                Destroy(tex);
+                toastPreview.texture = null;
+                toastPreview.gameObject.SetActive(false);
+                return;
+            }
+            toastPreviewTex = tex;
+            toastPreview.texture = tex;
+            toastPreview.gameObject.SetActive(true);
+        }
+
+        private PhotoModePresetData GetPresetSlot(int slot)
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return null;
+            var d = SaveManager.Instance.CurrentData;
+            if (slot == 0) return d.photoPresetA;
+            if (slot == 1) return d.photoPresetB;
+            return d.photoPresetC;
+        }
+
+        private void SavePreset(int slot)
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            PhotoModePresetData p = new PhotoModePresetData();
+            p.hasValue = true;
+            p.bg = bgDropdown != null ? bgDropdown.value : 0;
+            p.light = lightDropdown != null ? lightDropdown.value : 0;
+            p.framing = framingDropdown != null ? framingDropdown.value : 0;
+            p.lens = lensDropdown != null ? lensDropdown.value : 1;
+            p.filter = filterDropdown != null ? filterDropdown.value : 0;
+            p.guides = guidesDropdown != null ? guidesDropdown.value : 0;
+            p.poseTrigger = poseDropdown != null && poseDropdown.options.Count > 0 ? poseDropdown.options[poseDropdown.value].text : "idle";
+            EnsurePostFx();
+            if (postFx != null)
+            {
+                p.blur = postFx.blurStrength;
+                p.vignette = postFx.vignetteStrength;
+                p.saturation = postFx.saturation;
+                p.contrast = postFx.contrast;
+            }
+
+            if (slot == 0) d.photoPresetA = p;
+            else if (slot == 1) d.photoPresetB = p;
+            else d.photoPresetC = p;
+
+            SaveManager.Instance.SaveData();
+
+            lastToastPath = "";
+            lastToastShare = "";
+            if (toastRoot != null) toastRoot.SetActive(true);
+            if (toastText != null) toastText.text = $"已保存预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))}";
+            SetToastPreview(null);
+        }
+
+        private void ApplyPreset(int slot)
+        {
+            PhotoModePresetData p = GetPresetSlot(slot);
+            if (p == null || !p.hasValue)
+            {
+                if (toastRoot != null) toastRoot.SetActive(true);
+                if (toastText != null) toastText.text = $"预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))} 为空";
+                SetToastPreview(null);
+                return;
+            }
+
+            EnsureDeps();
+            EnsurePostFx();
+
+            updatingUi = true;
+            if (bgDropdown != null) bgDropdown.value = Mathf.Clamp(p.bg, 0, bgDropdown.options.Count - 1);
+            if (lightDropdown != null) lightDropdown.value = Mathf.Clamp(p.light, 0, lightDropdown.options.Count - 1);
+            if (framingDropdown != null) framingDropdown.value = Mathf.Clamp(p.framing, 0, framingDropdown.options.Count - 1);
+            if (lensDropdown != null) lensDropdown.value = Mathf.Clamp(p.lens, 0, lensDropdown.options.Count - 1);
+            if (filterDropdown != null) filterDropdown.value = Mathf.Clamp(p.filter, 0, filterDropdown.options.Count - 1);
+            if (guidesDropdown != null) guidesDropdown.value = Mathf.Clamp(p.guides, 0, guidesDropdown.options.Count - 1);
+            updatingUi = false;
+
+            if (bgDropdown != null) { bgDropdown.RefreshShownValue(); OnBackgroundChanged(bgDropdown.value); }
+            if (lightDropdown != null) { lightDropdown.RefreshShownValue(); OnLightChanged(lightDropdown.value); }
+            if (framingDropdown != null) { framingDropdown.RefreshShownValue(); OnFramingChanged(framingDropdown.value); }
+            if (lensDropdown != null) { lensDropdown.RefreshShownValue(); OnLensChanged(lensDropdown.value); }
+            if (filterDropdown != null) { filterDropdown.RefreshShownValue(); OnFilterChanged(filterDropdown.value); }
+            if (guidesDropdown != null) { guidesDropdown.RefreshShownValue(); OnGuidesChanged(guidesDropdown.value); }
+
+            if (postFx != null)
+            {
+                postFx.blurStrength = p.blur;
+                postFx.vignetteStrength = p.vignette;
+                postFx.saturation = p.saturation;
+                postFx.contrast = p.contrast;
+                SyncSlidersFromPostFx();
+            }
+
+            if (poseDropdown != null && poseDropdown.options.Count > 0)
+            {
+                int idx = 0;
+                for (int i = 0; i < poseDropdown.options.Count; i++)
+                {
+                    if (poseDropdown.options[i].text == p.poseTrigger)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+                poseDropdown.value = idx;
+                poseDropdown.RefreshShownValue();
+                OnPoseChanged(idx);
+            }
+
+            if (toastRoot != null) toastRoot.SetActive(true);
+            if (toastText != null) toastText.text = $"已应用预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))}";
+            SetToastPreview(null);
         }
     }
 }

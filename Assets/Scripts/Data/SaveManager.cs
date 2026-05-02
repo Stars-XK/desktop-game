@@ -18,6 +18,23 @@ namespace DesktopPet.Data
     }
 
     [Serializable]
+    public class PhotoModePresetData
+    {
+        public bool hasValue = false;
+        public int bg = 0;
+        public int light = 0;
+        public int framing = 0;
+        public int lens = 1;
+        public int filter = 0;
+        public int guides = 0;
+        public string poseTrigger = "idle";
+        public float blur = 0.26f;
+        public float vignette = 0.20f;
+        public float saturation = 1.08f;
+        public float contrast = 1.06f;
+    }
+
+    [Serializable]
     public class PetSaveData
     {
         public string equippedHairId = "";
@@ -49,6 +66,9 @@ namespace DesktopPet.Data
         public string currentMood = "idle";
         public long moodExpireUnix = 0;
         public List<string> milestoneMemories = new List<string>();
+        public PhotoModePresetData photoPresetA = new PhotoModePresetData();
+        public PhotoModePresetData photoPresetB = new PhotoModePresetData();
+        public PhotoModePresetData photoPresetC = new PhotoModePresetData();
 
         public List<string> ownedItemIds = new List<string>();
         public List<string> favoriteItemIds = new List<string>();
@@ -143,6 +163,12 @@ namespace DesktopPet.Data
             if (string.IsNullOrEmpty(data.currentMood)) data.currentMood = "idle";
             if (data.milestoneMemories == null) data.milestoneMemories = new List<string>();
             if (data.milestoneMemories.Count > 32) data.milestoneMemories.RemoveRange(32, data.milestoneMemories.Count - 32);
+            if (data.photoPresetA == null) data.photoPresetA = new PhotoModePresetData();
+            if (data.photoPresetB == null) data.photoPresetB = new PhotoModePresetData();
+            if (data.photoPresetC == null) data.photoPresetC = new PhotoModePresetData();
+            if (data.photoPresetA.poseTrigger == null) data.photoPresetA.poseTrigger = "idle";
+            if (data.photoPresetB.poseTrigger == null) data.photoPresetB.poseTrigger = "idle";
+            if (data.photoPresetC.poseTrigger == null) data.photoPresetC.poseTrigger = "idle";
 
             if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
             if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
