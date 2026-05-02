@@ -275,6 +275,11 @@ namespace DesktopPet.UI
             EnsureDyePanel(drawerRoot, resources);
 
             EnsureLoadingOverlay(drawerRoot);
+
+            if (filterPanelRoot != null) filterPanelRoot.SetActive(false);
+            if (presetBarRoot != null) presetBarRoot.SetActive(false);
+            if (dyePanelRoot != null) dyePanelRoot.SetActive(false);
+            CloseDrawer();
         }
 
         private void EnsureLoadingOverlay(GameObject drawerRoot)
@@ -941,8 +946,10 @@ namespace DesktopPet.UI
             float to = open ? 0f : drawerWidth + 18f;
             drawerRoutine = StartCoroutine(AnimateDrawer(from, to));
 
-            WardrobeShowroomUI showroom = GetComponent<WardrobeShowroomUI>();
-            if (showroom != null) showroom.SetVisible(true);
+            if (wardrobePanel != null) wardrobePanel.SetActive(open);
+            if (filterPanelRoot != null) filterPanelRoot.SetActive(open);
+            if (presetBarRoot != null) presetBarRoot.SetActive(open);
+            if (dyePanelRoot != null) dyePanelRoot.SetActive(open);
         }
 
         private IEnumerator AnimateDrawer(float fromX, float toX)

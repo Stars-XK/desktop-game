@@ -181,6 +181,7 @@ namespace DesktopPet.UI
             }
             openButton = btnGo.GetComponent<Button>();
             if (btnGo.GetComponent<UIButtonFeedback>() == null) btnGo.AddComponent<UIButtonFeedback>();
+            btnGo.SetActive(false);
 
             panel = new GameObject("PhotoPanel");
             panel.transform.SetParent(root.transform, false);
