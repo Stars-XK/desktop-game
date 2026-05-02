@@ -48,19 +48,23 @@ namespace DesktopPet.UI
                     float startX = -w;
                     float endX = w;
                     Vector2 p = shineRect.anchoredPosition;
+                    Quaternion baseRot = shineRect.localRotation;
 
                     float t = 0f;
                     while (t < duration)
                     {
                         t += Time.unscaledDeltaTime;
                         float a = Mathf.Clamp01(t / duration);
-                        p.x = Mathf.Lerp(startX, endX, a);
+                        float eased = UIAnim.EaseOutCubic(a);
+                        p.x = Mathf.Lerp(startX, endX, eased);
                         shineRect.anchoredPosition = p;
+                        float z = Mathf.Lerp(22f, 28f, eased);
+                        shineRect.localRotation = baseRot * Quaternion.Euler(0f, 0f, z - 25f);
 
                         if (shineImage != null)
                         {
                             Color c = shineImage.color;
-                            c.a = Mathf.Sin(a * Mathf.PI) * 0.55f;
+                            c.a = Mathf.Sin(eased * Mathf.PI) * 0.65f;
                             shineImage.color = c;
                         }
 
@@ -73,6 +77,7 @@ namespace DesktopPet.UI
                         c.a = 0f;
                         shineImage.color = c;
                     }
+                    shineRect.localRotation = baseRot;
                 }
 
                 yield return new WaitForSecondsRealtime(interval);
