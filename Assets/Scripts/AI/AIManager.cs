@@ -1,4 +1,5 @@
 using UnityEngine;
+using DesktopPet.Data;
 
 namespace DesktopPet.AI
 {
@@ -12,6 +13,7 @@ namespace DesktopPet.AI
 
         [Header("核心管理器 (Managers)")]
         public DesktopPet.UI.UIManager uiManager;
+        public MemoryManager memoryManager;
 
         private ILLMProvider llmProvider;
         private ITTSProvider ttsProvider;
@@ -32,6 +34,25 @@ namespace DesktopPet.AI
             if (llmProvider == null) return;
 
             Debug.Log($"User: {input}");
+
+            if (llmProviderComponent is OpenAILLMProvider openai)
+            {
+                if (SaveManager.Instance != null)
+                {
+                    var d = SaveManager.Instance.CurrentData;
+                    PersonaState ps = new PersonaState
+                    {
+                        petName = d.petName,
+                        userNickname = d.userNickname,
+                        relationshipLevel = d.relationshipLevel,
+                        relationshipXp = d.relationshipXp,
+                        personaStyle = d.personaStyle,
+                        longTermSummary = d.longTermSummary,
+                        factsJson = d.factsJson
+                    };
+                    openai.SetPersonaState(ps);
+                }
+            }
             
             llmProvider.SendMessageAsync(input, 
                 onSuccess: (responseText, emotion) => 
@@ -73,6 +94,11 @@ namespace DesktopPet.AI
                             },
                             onError: error => Debug.LogError($"TTS Error: {error}")
                         );
+                    }
+
+                    if (memoryManager != null)
+                    {
+                        memoryManager.OnConversationTurn(input, responseText);
                     }
                 },
                 onError: error => Debug.LogError($"LLM Error: {error}")
