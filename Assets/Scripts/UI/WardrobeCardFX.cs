@@ -59,6 +59,7 @@ namespace DesktopPet.UI
         {
             EnsureRefs();
             if (cg == null || rt == null) return;
+            basePos = rt.anchoredPosition;
 
             StopAllCoroutines();
             StartCoroutine(Entrance(delay));
