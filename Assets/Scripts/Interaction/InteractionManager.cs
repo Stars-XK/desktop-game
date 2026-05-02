@@ -23,10 +23,15 @@ namespace DesktopPet.Interaction
         public bool lastHitValid;
         public Vector3 lastHitPointWorld;
         public float lastHitNormalizedHeight;
+        public bool IsDragging => isDragging;
+        public bool DragMoved => dragMoved;
+        public bool LastWasDrag => lastWasDrag;
 
         private Vector3 offset;
         private float zCoord;
         private bool isDragging = false;
+        private bool dragMoved = false;
+        private bool lastWasDrag = false;
         private Camera mainCamera;
 
         private void Start()
@@ -73,6 +78,7 @@ namespace DesktopPet.Interaction
             zCoord = mainCamera.WorldToScreenPoint(gameObject.transform.position).z;
             offset = gameObject.transform.position - GetMouseAsWorldPoint();
             isDragging = true;
+            dragMoved = false;
             currentVelocityY = 0f; // Reset gravity speed on pickup
             
             // Trigger petting start if just clicked
@@ -82,6 +88,7 @@ namespace DesktopPet.Interaction
         private void OnMouseUp()
         {
             isDragging = false;
+            lastWasDrag = dragMoved;
             onPettingEnded?.Invoke();
         }
 
@@ -106,6 +113,7 @@ namespace DesktopPet.Interaction
         private void OnMouseDrag()
         {
             if (!canDrag || !isDragging) return;
+            dragMoved = true;
 
             Vector3 targetWorldPos = GetMouseAsWorldPoint() + offset;
             

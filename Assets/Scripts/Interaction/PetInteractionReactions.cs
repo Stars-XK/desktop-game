@@ -12,8 +12,12 @@ namespace DesktopPet.Interaction
 
         public float minSecondsBetweenReactions = 10f;
         public int xpPerPet = 6;
+        public float comboWindowSeconds = 12f;
 
         private float nextAllowedAt;
+        private int comboCount;
+        private float comboExpireAt;
+        private Coroutine pending;
 
         private void Start()
         {
@@ -27,6 +31,11 @@ namespace DesktopPet.Interaction
 
         private void OnDestroy()
         {
+            if (pending != null)
+            {
+                StopCoroutine(pending);
+                pending = null;
+            }
             if (interaction != null)
             {
                 interaction.onPettingStarted.RemoveListener(OnPettingStarted);
@@ -46,12 +55,16 @@ namespace DesktopPet.Interaction
                 else if (h > 0.56f) zone = "脸";
             }
 
-            string seed =
-                $"（系统提示）用户正在触摸你的{zone}。你要像女朋友一样给出很短很口语的回应：\n" +
-                "1) 开头必须是 [emotion]\n" +
-                "2) 一句话，带语气词\n" +
-                "3) 如果是头：更害羞；如果是脸：更撒娇；如果是身体：更小傲娇";
-            TriggerReaction(seed, zone);
+            if (Time.unscaledTime > comboExpireAt) comboCount = 0;
+            comboCount += 1;
+            comboExpireAt = Time.unscaledTime + comboWindowSeconds;
+
+            if (pending != null)
+            {
+                StopCoroutine(pending);
+                pending = null;
+            }
+            pending = StartCoroutine(DelayedReact(zone, comboCount));
         }
 
         private void OnPettingEnded()
@@ -81,6 +94,25 @@ namespace DesktopPet.Interaction
         {
             int lv = Mathf.Max(1, level);
             return 40 + lv * 20;
+        }
+
+        private IEnumerator DelayedReact(string zone, int combo)
+        {
+            yield return new WaitForSecondsRealtime(0.12f);
+            pending = null;
+
+            if (interaction != null && interaction.DragMoved) yield break;
+
+            string stage = combo >= 4 ? "playful_annoyed" : (combo == 3 ? "tsundere" : (combo == 2 ? "cute" : "shy"));
+
+            string seed =
+                $"（系统提示）用户正在触摸你的{zone}，这是连续第{combo}次。你要像女朋友一样回应：\n" +
+                "1) 开头必须是 [emotion]\n" +
+                "2) 一句话，口语，带语气词\n" +
+                $"3) 当前语气阶段={stage}\n" +
+                "4) 头：更害羞；脸：更撒娇；身体：更小傲娇；playful_annoyed 也要可爱不凶";
+
+            TriggerReaction(seed, zone);
         }
 
         private void TriggerReaction(string seed, string zone)
