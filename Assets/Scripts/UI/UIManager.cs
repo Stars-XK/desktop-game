@@ -100,6 +100,8 @@ namespace DesktopPet.UI
         public void DisplayAIResponse(string message)
         {
             AppendToChat($"<color=#A9A9A9>Pet:</color> {message}");
+            ShowroomBubbleUI bubble = FindObjectOfType<ShowroomBubbleUI>();
+            if (bubble != null) bubble.ShowMessage(message);
             if (typewriterText != null)
             {
                 typewriterText.PlayText(message);

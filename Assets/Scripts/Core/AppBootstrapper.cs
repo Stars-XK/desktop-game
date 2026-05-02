@@ -114,6 +114,8 @@ namespace DesktopPet.Core
             showroom.wardrobeUI = GetComponent<WardrobeUIController>();
             showroom.uiManager = uiManager;
 
+            if (GetComponent<ShowroomBubbleUI>() == null) gameObject.AddComponent<ShowroomBubbleUI>();
+
             ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
             if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
             camCtl.cam = Camera.main;
