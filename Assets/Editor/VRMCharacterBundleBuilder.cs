@@ -12,7 +12,7 @@ namespace DesktopPet.EditorTools
         [MenuItem("DesktopPet/VRM/Build Selected Prefab As Character Bundle")]
         private static void BuildSelected()
         {
-            Object obj = Selection.activeObject;
+            UnityEngine.Object obj = Selection.activeObject;
             if (obj == null)
             {
                 EditorUtility.DisplayDialog("VRM 打包", "请在 Project 面板选中一个 .vrm 或 prefab。", "OK");
@@ -133,7 +133,7 @@ namespace DesktopPet.EditorTools
 
         private static string GetModsDir()
         {
-            AssetBundleLoader loader = Object.FindObjectOfType<AssetBundleLoader>();
+            AssetBundleLoader loader = UnityEngine.Object.FindObjectOfType<AssetBundleLoader>();
             if (loader != null) return loader.GetModsDirectory();
 
             string path = Path.Combine(Application.dataPath, "..", "Mods");
