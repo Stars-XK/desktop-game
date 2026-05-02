@@ -56,6 +56,15 @@ namespace DesktopPet.UI
         private bool updatingUi;
         private static Sprite solidSprite;
         private Texture2D toastPreviewTex;
+        private readonly List<string> savedHistory = new List<string>();
+        private int fullscreenIndex = -1;
+        private GameObject fullscreenRoot;
+        private RawImage fullscreenImage;
+        private Text fullscreenCounter;
+        private Button fullscreenPrev;
+        private Button fullscreenNext;
+        private Button fullscreenClose;
+        private Texture2D fullscreenTex;
 
         private void Start()
         {
@@ -64,9 +73,32 @@ namespace DesktopPet.UI
             BindPhotoEvents();
         }
 
+        private void Update()
+        {
+            if (fullscreenRoot == null || !fullscreenRoot.activeSelf) return;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                CloseFullscreen();
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                ShowPrev();
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                ShowNext();
+                return;
+            }
+        }
+
         private void OnDestroy()
         {
             UnbindPhotoEvents();
+            if (toastPreviewTex != null) Destroy(toastPreviewTex);
+            if (fullscreenTex != null) Destroy(fullscreenTex);
         }
 
         private void EnsureDeps()
@@ -751,13 +783,15 @@ namespace DesktopPet.UI
             GameObject previewGo = new GameObject("Preview");
             previewGo.transform.SetParent(toastRoot.transform, false);
             toastPreview = previewGo.AddComponent<RawImage>();
-            toastPreview.raycastTarget = false;
+            toastPreview.raycastTarget = true;
             RectTransform prt = previewGo.GetComponent<RectTransform>();
             prt.anchorMin = new Vector2(0.02f, 0.18f);
             prt.anchorMax = new Vector2(0.20f, 0.96f);
             prt.offsetMin = Vector2.zero;
             prt.offsetMax = Vector2.zero;
             previewGo.SetActive(false);
+            Button pb = previewGo.AddComponent<Button>();
+            pb.onClick.AddListener(OpenFullscreenFromToast);
 
             GameObject textGo = new GameObject("Text");
             textGo.transform.SetParent(toastRoot.transform, false);
@@ -782,6 +816,82 @@ namespace DesktopPet.UI
             if (toastCopyButton != null) toastCopyButton.onClick.AddListener(CopyToastPath);
             if (toastShareButton != null) toastShareButton.onClick.AddListener(CopyToastShare);
             if (toastCloseButton != null) toastCloseButton.onClick.AddListener(() => toastRoot.SetActive(false));
+
+            EnsureFullscreen(resources, font);
+        }
+
+        private void EnsureFullscreen(DefaultControls.Resources resources, Font font)
+        {
+            if (fullscreenRoot != null) return;
+            if (root == null) return;
+
+            fullscreenRoot = new GameObject("FullscreenPreview");
+            fullscreenRoot.transform.SetParent(root.transform, false);
+            Image bg = fullscreenRoot.AddComponent<Image>();
+            bg.sprite = GetSolidSprite();
+            bg.color = new Color(0f, 0f, 0f, 0.72f);
+            RectTransform rt = fullscreenRoot.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            fullscreenRoot.SetActive(false);
+
+            GameObject imgGo = new GameObject("Image");
+            imgGo.transform.SetParent(fullscreenRoot.transform, false);
+            fullscreenImage = imgGo.AddComponent<RawImage>();
+            fullscreenImage.raycastTarget = false;
+            RectTransform irt = imgGo.GetComponent<RectTransform>();
+            irt.anchorMin = new Vector2(0.06f, 0.08f);
+            irt.anchorMax = new Vector2(0.94f, 0.92f);
+            irt.offsetMin = Vector2.zero;
+            irt.offsetMax = Vector2.zero;
+
+            GameObject counterGo = new GameObject("Counter");
+            counterGo.transform.SetParent(fullscreenRoot.transform, false);
+            fullscreenCounter = counterGo.AddComponent<Text>();
+            fullscreenCounter.font = font;
+            fullscreenCounter.fontSize = 18;
+            fullscreenCounter.alignment = TextAnchor.UpperCenter;
+            fullscreenCounter.color = WardrobeThemeFactory.TextMain;
+            RectTransform crt = counterGo.GetComponent<RectTransform>();
+            crt.anchorMin = new Vector2(0.20f, 0.92f);
+            crt.anchorMax = new Vector2(0.80f, 0.98f);
+            crt.offsetMin = Vector2.zero;
+            crt.offsetMax = Vector2.zero;
+
+            fullscreenPrev = CreateFullscreenButton(resources, font, "←", new Vector2(0.06f, 0.44f), new Vector2(0.12f, 0.56f));
+            fullscreenNext = CreateFullscreenButton(resources, font, "→", new Vector2(0.88f, 0.44f), new Vector2(0.94f, 0.56f));
+            fullscreenClose = CreateFullscreenButton(resources, font, "×", new Vector2(0.92f, 0.92f), new Vector2(0.98f, 0.98f));
+
+            if (fullscreenPrev != null) fullscreenPrev.onClick.AddListener(ShowPrev);
+            if (fullscreenNext != null) fullscreenNext.onClick.AddListener(ShowNext);
+            if (fullscreenClose != null) fullscreenClose.onClick.AddListener(CloseFullscreen);
+        }
+
+        private Button CreateFullscreenButton(DefaultControls.Resources resources, Font font, string label, Vector2 min, Vector2 max)
+        {
+            GameObject go = DefaultControls.CreateButton(resources);
+            go.name = "Fullscreen_" + label;
+            go.transform.SetParent(fullscreenRoot.transform, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = min;
+            rt.anchorMax = max;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image bg = go.GetComponent<Image>();
+            bg.sprite = GetSolidSprite();
+            bg.color = new Color(0f, 0f, 0f, 0.25f);
+            Text t = go.GetComponentInChildren<Text>();
+            if (t != null)
+            {
+                t.font = font;
+                t.text = label;
+                t.fontSize = 28;
+                t.color = WardrobeThemeFactory.TextMain;
+            }
+            if (go.GetComponent<UIButtonFeedback>() == null) go.AddComponent<UIButtonFeedback>();
+            return go.GetComponent<Button>();
         }
 
         private Button CreateToastButton(DefaultControls.Resources resources, Font font, string label, Vector2 min, Vector2 max)
@@ -812,6 +922,7 @@ namespace DesktopPet.UI
         {
             lastToastPath = path;
             lastToastShare = BuildShareText();
+            PushHistory(path);
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null)
             {
@@ -895,6 +1006,73 @@ namespace DesktopPet.UI
             toastPreviewTex = tex;
             toastPreview.texture = tex;
             toastPreview.gameObject.SetActive(true);
+        }
+
+        private void PushHistory(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            int existing = savedHistory.IndexOf(path);
+            if (existing >= 0) savedHistory.RemoveAt(existing);
+            savedHistory.Add(path);
+            if (savedHistory.Count > 30) savedHistory.RemoveAt(0);
+            fullscreenIndex = savedHistory.Count - 1;
+        }
+
+        private void OpenFullscreenFromToast()
+        {
+            if (string.IsNullOrEmpty(lastToastPath)) return;
+            if (savedHistory.Count == 0) PushHistory(lastToastPath);
+            fullscreenIndex = savedHistory.IndexOf(lastToastPath);
+            if (fullscreenIndex < 0) fullscreenIndex = savedHistory.Count - 1;
+            OpenFullscreenAt(fullscreenIndex);
+        }
+
+        private void OpenFullscreenAt(int index)
+        {
+            if (fullscreenRoot == null) return;
+            if (savedHistory.Count == 0) return;
+            index = Mathf.Clamp(index, 0, savedHistory.Count - 1);
+            fullscreenIndex = index;
+
+            string path = savedHistory[index];
+            if (!File.Exists(path)) return;
+
+            if (fullscreenTex != null)
+            {
+                Destroy(fullscreenTex);
+                fullscreenTex = null;
+            }
+
+            byte[] bytes = File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!tex.LoadImage(bytes))
+            {
+                Destroy(tex);
+                return;
+            }
+            fullscreenTex = tex;
+            if (fullscreenImage != null) fullscreenImage.texture = tex;
+            if (fullscreenCounter != null) fullscreenCounter.text = $"{index + 1} / {savedHistory.Count}";
+            fullscreenRoot.SetActive(true);
+        }
+
+        private void CloseFullscreen()
+        {
+            if (fullscreenRoot != null) fullscreenRoot.SetActive(false);
+        }
+
+        private void ShowPrev()
+        {
+            if (savedHistory.Count == 0) return;
+            int next = fullscreenIndex <= 0 ? savedHistory.Count - 1 : fullscreenIndex - 1;
+            OpenFullscreenAt(next);
+        }
+
+        private void ShowNext()
+        {
+            if (savedHistory.Count == 0) return;
+            int next = fullscreenIndex >= savedHistory.Count - 1 ? 0 : fullscreenIndex + 1;
+            OpenFullscreenAt(next);
         }
 
         private List<PhotoModePresetData> GetPresetList()
