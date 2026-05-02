@@ -13,7 +13,7 @@ namespace DesktopPet.EditorTools
             Object obj = Selection.activeObject;
             if (obj == null)
             {
-                EditorUtility.DisplayDialog("VRM 打包", "请在 Project 面板选中一个 prefab（通常是导入 .vrm 后生成的 prefab）", "OK");
+                EditorUtility.DisplayDialog("VRM 打包", "请在 Project 面板选中一个 .vrm 或 prefab。", "OK");
                 return;
             }
 
@@ -24,9 +24,9 @@ namespace DesktopPet.EditorTools
                 return;
             }
 
-            if (!assetPath.EndsWith(".prefab"))
+            if (!assetPath.EndsWith(".prefab") && !assetPath.EndsWith(".vrm"))
             {
-                EditorUtility.DisplayDialog("VRM 打包", "请选中一个 .prefab。", "OK");
+                EditorUtility.DisplayDialog("VRM 打包", "请选中一个 .vrm 或 prefab。", "OK");
                 return;
             }
 
@@ -50,15 +50,40 @@ namespace DesktopPet.EditorTools
             {
                 if (!AssetDatabase.IsValidFolder(folders[fi])) continue;
 
-                string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { folders[fi] });
-                if (guids == null || guids.Length == 0) continue;
+                HashSet<string> assetPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                for (int i = 0; i < guids.Length; i++)
+                string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { folders[fi] });
+                if (prefabGuids != null)
                 {
-                    string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    for (int i = 0; i < prefabGuids.Length; i++)
+                    {
+                        string p = AssetDatabase.GUIDToAssetPath(prefabGuids[i]);
+                        if (string.IsNullOrEmpty(p)) continue;
+                        if (p.EndsWith(".prefab")) assetPaths.Add(p);
+                    }
+                }
+
+                string absFolder = Path.GetFullPath(Path.Combine(Application.dataPath, "..", folders[fi]));
+                if (Directory.Exists(absFolder))
+                {
+                    string[] vrms = Directory.GetFiles(absFolder, "*.vrm", SearchOption.TopDirectoryOnly);
+                    for (int i = 0; i < vrms.Length; i++)
+                    {
+                        string rel = vrms[i].Replace('\\', '/');
+                        int idx = rel.IndexOf("/Assets/", StringComparison.OrdinalIgnoreCase);
+                        if (idx >= 0)
+                        {
+                            string ap = rel.Substring(idx + 1);
+                            assetPaths.Add(ap);
+                        }
+                    }
+                }
+
+                foreach (string assetPath in assetPaths)
+                {
                     if (string.IsNullOrEmpty(assetPath)) continue;
-                    string prefabName = Path.GetFileNameWithoutExtension(assetPath);
-                    string bundleName = "character_" + SanitizeBundleName(prefabName);
+                    string name = Path.GetFileNameWithoutExtension(assetPath);
+                    string bundleName = "character_" + SanitizeBundleName(name);
                     BuildAssetBundle(bundleName, new[] { assetPath });
                     anyBuilt = true;
                 }
@@ -66,7 +91,7 @@ namespace DesktopPet.EditorTools
 
             if (!anyBuilt)
             {
-                EditorUtility.DisplayDialog("VRM 打包", "未找到可打包的 prefab。请把 .vrm 放到 Assets/Art/Models/VRM 或 Assets/ThirdParty/VRM，并等待导入生成 prefab。", "OK");
+                EditorUtility.DisplayDialog("VRM 打包", "未找到可打包的 .vrm 或 prefab。请把 .vrm 放到 Assets/Art/Models/VRM 或 Assets/ThirdParty/VRM。", "OK");
                 return;
             }
 

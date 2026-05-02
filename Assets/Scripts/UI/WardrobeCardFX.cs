@@ -59,6 +59,7 @@ namespace DesktopPet.UI
         {
             EnsureRefs();
             if (cg == null || rt == null) return;
+            if (!isActiveAndEnabled) return;
             basePos = rt.anchoredPosition;
 
             StopAllCoroutines();
@@ -77,6 +78,7 @@ namespace DesktopPet.UI
         {
             EnsureRefs();
             if (delay > 0f) yield return new WaitForSecondsRealtime(delay);
+            if (!isActiveAndEnabled) yield break;
             if (cg == null || rt == null) yield break;
 
             Vector2 startPos = basePos + new Vector2(0f, -4f);
