@@ -39,24 +39,32 @@ namespace DesktopPet.CameraSys
                 tint = Color.white;
                 saturation = 1.02f;
                 contrast = 1.02f;
+                blurStrength = 0.22f;
+                vignetteStrength = 0.16f;
             }
             else if (p == 1)
             {
                 tint = new Color(1.00f, 0.94f, 0.90f, 1f);
                 saturation = 1.08f;
                 contrast = 1.06f;
+                blurStrength = 0.26f;
+                vignetteStrength = 0.20f;
             }
             else if (p == 2)
             {
                 tint = new Color(0.90f, 0.96f, 1.00f, 1f);
                 saturation = 1.06f;
                 contrast = 1.06f;
+                blurStrength = 0.26f;
+                vignetteStrength = 0.20f;
             }
             else
             {
                 tint = new Color(0.98f, 0.88f, 1.00f, 1f);
                 saturation = 1.10f;
                 contrast = 1.08f;
+                blurStrength = 0.28f;
+                vignetteStrength = 0.22f;
             }
         }
 
@@ -89,4 +97,3 @@ namespace DesktopPet.CameraSys
         }
     }
 }
-
