@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using DesktopPet.AI;
 using DesktopPet.Animation;
 using DesktopPet.CameraSys;
 using DesktopPet.Data;
@@ -32,10 +34,16 @@ namespace DesktopPet.UI
         private InputField renameInput;
         private Button renameOkButton;
         private Button renameCancelButton;
+        private Button quickPreset1;
+        private Button quickPreset2;
+        private Button quickPreset3;
         private Button toastOpenButton;
         private Button toastCopyButton;
         private Button toastShareButton;
         private Button toastCloseButton;
+        private Toggle toastAutoCopyToggle;
+        private Toggle toastAutoOpenToggle;
+        private Toggle toastAutoHideToggle;
         private Dropdown bgDropdown;
         private Dropdown lightDropdown;
         private Dropdown framingDropdown;
@@ -51,10 +59,13 @@ namespace DesktopPet.UI
         private RawImage toastPreview;
         private ShowroomCameraController camCtl;
         private PhotoModePostFX postFx;
+        private AIManager aiManager;
+        private UIManager uiManager;
         private string lastToastPath;
         private string lastToastShare;
         private bool updatingUi;
         private static Sprite solidSprite;
+        private static Sprite spiralSprite;
         private Texture2D toastPreviewTex;
         private readonly List<string> savedHistory = new List<string>();
         private int fullscreenIndex = -1;
@@ -65,6 +76,7 @@ namespace DesktopPet.UI
         private Button fullscreenNext;
         private Button fullscreenClose;
         private Texture2D fullscreenTex;
+        private Coroutine toastHideRoutine;
 
         private void Start()
         {
@@ -109,6 +121,8 @@ namespace DesktopPet.UI
 
             if (lighting == null) lighting = GetComponent<ShowroomLightingRig>();
             if (camCtl == null) camCtl = FindObjectOfType<ShowroomCameraController>();
+            if (aiManager == null) aiManager = FindObjectOfType<AIManager>();
+            if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
         }
 
         private void BindPhotoEvents()
@@ -188,7 +202,7 @@ namespace DesktopPet.UI
             bgDropdown = CreateDropdown(panel.transform, "背景", 0.68f, 0.06f, 0.22f, 0.24f, 0.48f, resources, font, new[] { "透明", "粉色", "蓝色", "奶油", "渐变" });
             lightDropdown = CreateDropdown(panel.transform, "灯光", 0.52f, 0.06f, 0.22f, 0.24f, 0.48f, resources, font, new[] { "暖", "冷", "粉紫金" });
             filterDropdown = CreateDropdown(panel.transform, "滤镜", 0.36f, 0.06f, 0.22f, 0.24f, 0.48f, resources, font, new[] { "原片", "暖", "冷", "粉紫金" });
-            guidesDropdown = CreateDropdown(panel.transform, "辅助线", 0.20f, 0.06f, 0.22f, 0.24f, 0.48f, resources, font, new[] { "无", "九宫格", "安全框" });
+            guidesDropdown = CreateDropdown(panel.transform, "辅助线", 0.20f, 0.06f, 0.22f, 0.24f, 0.48f, resources, font, new[] { "无", "九宫格", "安全框", "黄金比例", "黄金螺旋" });
 
             framingDropdown = CreateDropdown(panel.transform, "构图", 0.68f, 0.52f, 0.66f, 0.68f, 0.92f, resources, font, new[] { "全身", "半身", "特写" });
             lensDropdown = CreateDropdown(panel.transform, "镜头", 0.52f, 0.52f, 0.66f, 0.68f, 0.92f, resources, font, new[] { "35", "50", "85" });
@@ -225,6 +239,9 @@ namespace DesktopPet.UI
             presetOverwriteButton = CreatePresetButton(panel.transform, resources, font, "覆盖", new Vector2(0.74f, 0.28f), new Vector2(0.84f, 0.34f));
             presetDeleteButton = CreatePresetButton(panel.transform, resources, font, "删除", new Vector2(0.86f, 0.28f), new Vector2(0.96f, 0.34f));
             presetRenameButton = CreatePresetButton(panel.transform, resources, font, "改名", new Vector2(0.62f, 0.20f), new Vector2(0.72f, 0.26f));
+            quickPreset1 = CreatePresetButton(panel.transform, resources, font, "1", new Vector2(0.74f, 0.20f), new Vector2(0.82f, 0.26f));
+            quickPreset2 = CreatePresetButton(panel.transform, resources, font, "2", new Vector2(0.84f, 0.20f), new Vector2(0.92f, 0.26f));
+            quickPreset3 = CreatePresetButton(panel.transform, resources, font, "3", new Vector2(0.94f, 0.20f), new Vector2(0.99f, 0.26f));
 
             GameObject saveGo = DefaultControls.CreateButton(resources);
             saveGo.name = "SaveButton";
@@ -289,6 +306,9 @@ namespace DesktopPet.UI
             if (presetOverwriteButton != null) presetOverwriteButton.onClick.AddListener(OverwritePreset);
             if (presetDeleteButton != null) presetDeleteButton.onClick.AddListener(DeletePreset);
             if (presetRenameButton != null) presetRenameButton.onClick.AddListener(OpenRenameDialog);
+            if (quickPreset1 != null) quickPreset1.onClick.AddListener(() => ApplyRecentPreset(0));
+            if (quickPreset2 != null) quickPreset2.onClick.AddListener(() => ApplyRecentPreset(1));
+            if (quickPreset3 != null) quickPreset3.onClick.AddListener(() => ApplyRecentPreset(2));
 
             EnsureGuides();
             EnsureToast(font, resources);
@@ -577,6 +597,7 @@ namespace DesktopPet.UI
             RefreshPoseOptions();
             RefreshPresetOptionsFromSave();
             ApplySavedSelectedPreset();
+            RefreshQuickPresetButtons();
             if (filterDropdown != null) OnFilterChanged(filterDropdown.value);
             if (framingDropdown != null) OnFramingChanged(framingDropdown.value);
             if (lensDropdown != null) OnLensChanged(lensDropdown.value);
@@ -646,6 +667,88 @@ namespace DesktopPet.UI
             return solidSprite;
         }
 
+        private static Sprite GetSpiralSprite()
+        {
+            if (spiralSprite != null) return spiralSprite;
+            int size = 512;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+            Color clear = new Color(1f, 1f, 1f, 0f);
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    tex.SetPixel(x, y, clear);
+                }
+            }
+
+            float phi = 1.61803398875f;
+            float maxTheta = Mathf.PI * 4.5f;
+            float a = 0.035f;
+            Vector2 prev = Vector2.zero;
+            bool hasPrev = false;
+            for (int i = 0; i <= 900; i++)
+            {
+                float t = (i / 900f) * maxTheta;
+                float r = a * Mathf.Pow(phi, t / (Mathf.PI * 0.5f));
+                float x = 0.5f + Mathf.Cos(t) * r * 0.9f;
+                float y = 0.5f + Mathf.Sin(t) * r * 0.9f;
+                Vector2 p = new Vector2(x, y);
+                if (hasPrev)
+                {
+                    DrawTexLine(tex, prev, p, new Color(1f, 1f, 1f, 0.26f), 2);
+                }
+                prev = p;
+                hasPrev = true;
+            }
+
+            tex.Apply();
+            spiralSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return spiralSprite;
+        }
+
+        private static void DrawTexLine(Texture2D tex, Vector2 a01, Vector2 b01, Color c, int thickness)
+        {
+            if (tex == null) return;
+            int w = tex.width;
+            int h = tex.height;
+            int x0 = Mathf.RoundToInt(a01.x * (w - 1));
+            int y0 = Mathf.RoundToInt(a01.y * (h - 1));
+            int x1 = Mathf.RoundToInt(b01.x * (w - 1));
+            int y1 = Mathf.RoundToInt(b01.y * (h - 1));
+
+            int dx = Mathf.Abs(x1 - x0);
+            int dy = Mathf.Abs(y1 - y0);
+            int sx = x0 < x1 ? 1 : -1;
+            int sy = y0 < y1 ? 1 : -1;
+            int err = dx - dy;
+
+            while (true)
+            {
+                for (int oy = -thickness; oy <= thickness; oy++)
+                {
+                    for (int ox = -thickness; ox <= thickness; ox++)
+                    {
+                        int px = x0 + ox;
+                        int py = y0 + oy;
+                        if (px >= 0 && px < w && py >= 0 && py < h)
+                        {
+                            Color old = tex.GetPixel(px, py);
+                            Color nc = c;
+                            nc.a = Mathf.Max(old.a, c.a);
+                            tex.SetPixel(px, py, nc);
+                        }
+                    }
+                }
+
+                if (x0 == x1 && y0 == y1) break;
+                int e2 = 2 * err;
+                if (e2 > -dy) { err -= dy; x0 += sx; }
+                if (e2 < dx) { err += dx; y0 += sy; }
+            }
+        }
+
         private void EnsureGuides()
         {
             if (guidesRoot != null) return;
@@ -671,6 +774,24 @@ namespace DesktopPet.UI
             CreateGridLine("GridH2", false, 0.666f, 0f, 1f, 0.18f);
 
             CreateSafeFrame();
+
+            CreateGridLine("PhiV1", true, 0.382f, 0f, 1f, 0.16f);
+            CreateGridLine("PhiV2", true, 0.618f, 0f, 1f, 0.16f);
+            CreateGridLine("PhiH1", false, 0.382f, 0f, 1f, 0.16f);
+            CreateGridLine("PhiH2", false, 0.618f, 0f, 1f, 0.16f);
+
+            GameObject spiralGo = new GameObject("Spiral");
+            spiralGo.transform.SetParent(guidesRoot.transform, false);
+            Image spiralImg = spiralGo.AddComponent<Image>();
+            spiralImg.sprite = GetSpiralSprite();
+            spiralImg.raycastTarget = false;
+            spiralImg.color = new Color(1f, 1f, 1f, 0.75f);
+            spiralImg.preserveAspect = true;
+            RectTransform srt = spiralGo.GetComponent<RectTransform>();
+            srt.anchorMin = new Vector2(0.10f, 0.10f);
+            srt.anchorMax = new Vector2(0.90f, 0.90f);
+            srt.offsetMin = Vector2.zero;
+            srt.offsetMax = Vector2.zero;
         }
 
         private void CreateGridLine(string name, bool vertical, float at, float from, float to, float alpha)
@@ -746,9 +867,17 @@ namespace DesktopPet.UI
             }
 
             guidesRoot.SetActive(true);
-            bool grid = mode == 1;
-            ToggleByPrefix("Grid", grid);
+            ToggleByPrefix("Grid", mode == 1);
             ToggleByPrefix("Safe", mode == 2);
+            ToggleByPrefix("Phi", mode == 3);
+            ToggleExact("Spiral", mode == 4);
+        }
+
+        private void ToggleExact(string name, bool active)
+        {
+            if (guidesRoot == null) return;
+            Transform t = guidesRoot.transform.Find(name);
+            if (t != null) t.gameObject.SetActive(active);
         }
 
         private void ToggleByPrefix(string prefix, bool active)
@@ -775,7 +904,7 @@ namespace DesktopPet.UI
             WardrobeThemeFactory.ApplyGlassPanel(bg);
             RectTransform rt = toastRoot.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.22f, 0.02f);
-            rt.anchorMax = new Vector2(0.78f, 0.26f);
+            rt.anchorMax = new Vector2(0.78f, 0.32f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             toastRoot.SetActive(false);
@@ -807,6 +936,10 @@ namespace DesktopPet.UI
             trt.offsetMin = Vector2.zero;
             trt.offsetMax = Vector2.zero;
 
+            toastAutoCopyToggle = CreateToastToggle(resources, font, "自动复制", new Vector2(0.02f, 0.18f), new Vector2(0.32f, 0.32f));
+            toastAutoOpenToggle = CreateToastToggle(resources, font, "自动打开", new Vector2(0.34f, 0.18f), new Vector2(0.64f, 0.32f));
+            toastAutoHideToggle = CreateToastToggle(resources, font, "自动关闭", new Vector2(0.66f, 0.18f), new Vector2(0.98f, 0.32f));
+
             toastOpenButton = CreateToastButton(resources, font, "打开文件夹", new Vector2(0.02f, 0.04f), new Vector2(0.30f, 0.18f));
             toastCopyButton = CreateToastButton(resources, font, "复制路径", new Vector2(0.32f, 0.04f), new Vector2(0.58f, 0.18f));
             toastShareButton = CreateToastButton(resources, font, "复制文案", new Vector2(0.60f, 0.04f), new Vector2(0.80f, 0.18f));
@@ -816,8 +949,35 @@ namespace DesktopPet.UI
             if (toastCopyButton != null) toastCopyButton.onClick.AddListener(CopyToastPath);
             if (toastShareButton != null) toastShareButton.onClick.AddListener(CopyToastShare);
             if (toastCloseButton != null) toastCloseButton.onClick.AddListener(() => toastRoot.SetActive(false));
+            if (toastAutoCopyToggle != null) toastAutoCopyToggle.onValueChanged.AddListener(OnAutoCopyChanged);
+            if (toastAutoOpenToggle != null) toastAutoOpenToggle.onValueChanged.AddListener(OnAutoOpenChanged);
+            if (toastAutoHideToggle != null) toastAutoHideToggle.onValueChanged.AddListener(OnAutoHideChanged);
 
             EnsureFullscreen(resources, font);
+        }
+
+        private Toggle CreateToastToggle(DefaultControls.Resources resources, Font font, string label, Vector2 min, Vector2 max)
+        {
+            GameObject go = DefaultControls.CreateToggle(resources);
+            go.name = "Toggle_" + label;
+            go.transform.SetParent(toastRoot.transform, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = min;
+            rt.anchorMax = max;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image bg = go.GetComponent<Image>();
+            if (bg != null) WardrobeThemeFactory.ApplyGlassPanel(bg);
+            Text t = go.GetComponentInChildren<Text>();
+            if (t != null)
+            {
+                t.font = font;
+                t.text = label;
+                t.fontSize = 16;
+                t.color = WardrobeThemeFactory.TextMain;
+            }
+            Toggle tg = go.GetComponent<Toggle>();
+            return tg;
         }
 
         private void EnsureFullscreen(DefaultControls.Resources resources, Font font)
@@ -927,9 +1087,14 @@ namespace DesktopPet.UI
             if (toastText != null)
             {
                 string name = Path.GetFileName(path);
-                toastText.text = $"已保存：{name}\n{path}";
+                string folder = photoMode != null && !string.IsNullOrEmpty(photoMode.screenshotsFolder) ? photoMode.screenshotsFolder : "Screenshots";
+                toastText.text = $"已保存：{name}\n{folder}/{name}";
             }
             SetToastPreview(path);
+            SyncToastPrefsFromSave();
+            ApplyAutoExportActions();
+            StartToastAutoHide();
+            MaybePraisePhoto();
         }
 
         private void OnScreenshotFailed(string msg)
@@ -939,6 +1104,114 @@ namespace DesktopPet.UI
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null) toastText.text = $"保存失败：{msg}";
             SetToastPreview(null);
+            SyncToastPrefsFromSave();
+            StartToastAutoHide();
+        }
+
+        private void SyncToastPrefsFromSave()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            updatingUi = true;
+            if (toastAutoCopyToggle != null) toastAutoCopyToggle.isOn = d.photoAutoCopyShare;
+            if (toastAutoOpenToggle != null) toastAutoOpenToggle.isOn = d.photoAutoOpenFolder;
+            if (toastAutoHideToggle != null) toastAutoHideToggle.isOn = d.photoToastAutoHideSeconds > 0.01f;
+            updatingUi = false;
+        }
+
+        private void OnAutoCopyChanged(bool v)
+        {
+            if (updatingUi) return;
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            SaveManager.Instance.CurrentData.photoAutoCopyShare = v;
+            SaveManager.Instance.SaveData();
+        }
+
+        private void OnAutoOpenChanged(bool v)
+        {
+            if (updatingUi) return;
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            SaveManager.Instance.CurrentData.photoAutoOpenFolder = v;
+            SaveManager.Instance.SaveData();
+        }
+
+        private void OnAutoHideChanged(bool v)
+        {
+            if (updatingUi) return;
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            SaveManager.Instance.CurrentData.photoToastAutoHideSeconds = v ? 3.0f : 0f;
+            SaveManager.Instance.SaveData();
+        }
+
+        private void ApplyAutoExportActions()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            if (d.photoAutoCopyShare) CopyToastShare();
+            if (d.photoAutoOpenFolder) OpenToastFolder();
+        }
+
+        private void StartToastAutoHide()
+        {
+            if (toastHideRoutine != null)
+            {
+                StopCoroutine(toastHideRoutine);
+                toastHideRoutine = null;
+            }
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            float sec = SaveManager.Instance.CurrentData.photoToastAutoHideSeconds;
+            if (sec <= 0.01f) return;
+            toastHideRoutine = StartCoroutine(AutoHideToast(sec));
+        }
+
+        private IEnumerator AutoHideToast(float sec)
+        {
+            yield return new WaitForSecondsRealtime(sec);
+            if (toastRoot != null) toastRoot.SetActive(false);
+            toastHideRoutine = null;
+        }
+
+        private void MaybePraisePhoto()
+        {
+            EnsureDeps();
+            if (aiManager == null) return;
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            if (!d.enableProactive) return;
+
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (d.lastPhotoPraiseUnix != 0 && now - d.lastPhotoPraiseUnix < 25) return;
+            d.lastPhotoPraiseUnix = now;
+            d.currentMood = "happy";
+            d.moodExpireUnix = now + 180;
+            AddMilestoneOnce(d, "你喜欢给我拍照");
+            SaveManager.Instance.SaveData();
+
+            string filter = filterDropdown != null && filterDropdown.options.Count > 0 ? filterDropdown.options[filterDropdown.value].text : "原片";
+            string framing = framingDropdown != null && framingDropdown.options.Count > 0 ? framingDropdown.options[framingDropdown.value].text : "全身";
+            string lens = lensDropdown != null && lensDropdown.options.Count > 0 ? lensDropdown.options[lensDropdown.value].text : "50";
+            string guide = guidesDropdown != null && guidesDropdown.options.Count > 0 ? guidesDropdown.options[guidesDropdown.value].text : "无";
+
+            string seed =
+                "（系统提示）用户刚给你拍了一张照片。\n" +
+                $"参数：滤镜={filter}；构图={framing}；镜头={lens}；辅助线={guide}。\n" +
+                "你要像女朋友一样：先夸一句（甜一点），再给一个很短的构图/氛围建议。开头必须是 [emotion]，别太长。";
+
+            uiManager?.AppendToChat("<color=#A9A9A9><i>小优看了看照片…</i></color>");
+            aiManager.ProcessUserInput(seed);
+        }
+
+        private static void AddMilestoneOnce(PetSaveData d, string line)
+        {
+            if (d == null) return;
+            if (string.IsNullOrEmpty(line)) return;
+            if (d.milestoneMemories == null) d.milestoneMemories = new List<string>();
+            for (int i = 0; i < d.milestoneMemories.Count; i++)
+            {
+                if (d.milestoneMemories[i] == line) return;
+            }
+            d.milestoneMemories.Insert(0, line);
+            if (d.milestoneMemories.Count > 32) d.milestoneMemories.RemoveRange(32, d.milestoneMemories.Count - 32);
         }
 
         private void OpenToastFolder()
@@ -1125,9 +1398,75 @@ namespace DesktopPet.UI
             if (updatingUi) return;
             if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
             SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = value;
+            TouchRecentPreset(value);
             SaveManager.Instance.SaveData();
             ApplySavedSelectedPreset();
+            RefreshQuickPresetButtons();
             lastToastShare = BuildShareText();
+        }
+
+        private void TouchRecentPreset(int value)
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            if (d.recentPhotoPresetIndices == null) d.recentPhotoPresetIndices = new List<int>();
+            d.recentPhotoPresetIndices.RemoveAll(i => i < 0);
+            d.recentPhotoPresetIndices.Remove(value);
+            d.recentPhotoPresetIndices.Insert(0, value);
+            while (d.recentPhotoPresetIndices.Count > 3) d.recentPhotoPresetIndices.RemoveAt(d.recentPhotoPresetIndices.Count - 1);
+        }
+
+        private void RefreshQuickPresetButtons()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            if (d.recentPhotoPresetIndices == null) d.recentPhotoPresetIndices = new List<int>();
+            List<PhotoModePresetData> presets = GetPresetList();
+            if (presets == null) return;
+
+            int sel = Mathf.Clamp(d.selectedPhotoPresetIndex, 0, presets.Count - 1);
+            if (!d.recentPhotoPresetIndices.Contains(sel)) d.recentPhotoPresetIndices.Insert(0, sel);
+            d.recentPhotoPresetIndices.RemoveAll(i => i < 0 || i >= presets.Count);
+            while (d.recentPhotoPresetIndices.Count > 3) d.recentPhotoPresetIndices.RemoveAt(d.recentPhotoPresetIndices.Count - 1);
+
+            ApplyQuickButton(quickPreset1, 0, d.recentPhotoPresetIndices, presets);
+            ApplyQuickButton(quickPreset2, 1, d.recentPhotoPresetIndices, presets);
+            ApplyQuickButton(quickPreset3, 2, d.recentPhotoPresetIndices, presets);
+        }
+
+        private static void ApplyQuickButton(Button b, int slot, List<int> recent, List<PhotoModePresetData> presets)
+        {
+            if (b == null) return;
+            if (recent == null || presets == null || slot >= recent.Count)
+            {
+                b.gameObject.SetActive(false);
+                return;
+            }
+            int idx = recent[slot];
+            if (idx < 0 || idx >= presets.Count)
+            {
+                b.gameObject.SetActive(false);
+                return;
+            }
+            b.gameObject.SetActive(true);
+            string name = presets[idx] != null ? presets[idx].name : "";
+            if (string.IsNullOrEmpty(name)) name = "预设";
+            string shortName = name.Length > 4 ? name.Substring(0, 4) : name;
+            Text t = b.GetComponentInChildren<Text>();
+            if (t != null) t.text = $"{slot + 1}\n{shortName}";
+        }
+
+        private void ApplyRecentPreset(int slot)
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            var d = SaveManager.Instance.CurrentData;
+            if (d.recentPhotoPresetIndices == null) return;
+            if (slot < 0 || slot >= d.recentPhotoPresetIndices.Count) return;
+            int idx = d.recentPhotoPresetIndices[slot];
+            if (presetDropdown == null) return;
+            idx = Mathf.Clamp(idx, 0, presetDropdown.options.Count - 1);
+            presetDropdown.value = idx;
+            presetDropdown.RefreshShownValue();
         }
 
         private string BuildPresetName()
@@ -1217,8 +1556,10 @@ namespace DesktopPet.UI
             string name = BuildPresetName();
             list.Add(CaptureCurrentPreset(name));
             SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = list.Count - 1;
+            TouchRecentPreset(list.Count - 1);
             SaveManager.Instance.SaveData();
             RefreshPresetOptionsFromSave();
+            RefreshQuickPresetButtons();
 
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null) toastText.text = $"已新增预设：{name}";
@@ -1238,6 +1579,7 @@ namespace DesktopPet.UI
             list[idx] = p;
             SaveManager.Instance.SaveData();
             RefreshPresetOptionsFromSave();
+            RefreshQuickPresetButtons();
 
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null) toastText.text = $"已覆盖预设：{name}";
@@ -1259,10 +1601,25 @@ namespace DesktopPet.UI
             int idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, list.Count - 1);
             string name = list[idx] != null ? list[idx].name : "";
             list.RemoveAt(idx);
+
+            if (SaveManager.Instance.CurrentData.recentPhotoPresetIndices != null)
+            {
+                List<int> r = SaveManager.Instance.CurrentData.recentPhotoPresetIndices;
+                for (int i = r.Count - 1; i >= 0; i--)
+                {
+                    int v = r[i];
+                    if (v == idx) r.RemoveAt(i);
+                    else if (v > idx) r[i] = v - 1;
+                }
+                while (r.Count > 3) r.RemoveAt(r.Count - 1);
+            }
+
             SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = Mathf.Clamp(idx, 0, list.Count - 1);
+            TouchRecentPreset(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex);
             SaveManager.Instance.SaveData();
             RefreshPresetOptionsFromSave();
             ApplySavedSelectedPreset();
+            RefreshQuickPresetButtons();
 
             if (toastRoot != null) toastRoot.SetActive(true);
             if (toastText != null) toastText.text = $"已删除预设：{name}";
@@ -1384,6 +1741,7 @@ namespace DesktopPet.UI
             list[idx].name = name;
             SaveManager.Instance.SaveData();
             RefreshPresetOptionsFromSave();
+            RefreshQuickPresetButtons();
             if (renameRoot != null) renameRoot.SetActive(false);
         }
     }
