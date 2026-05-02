@@ -3,6 +3,7 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using DesktopPet.Data;
 
 namespace DesktopPet.AI
 {
@@ -60,6 +61,11 @@ namespace DesktopPet.AI
 
         public void SendMessageAsync(string message, Action<string, string> onSuccess, Action<string> onError)
         {
+            if (string.IsNullOrEmpty(apiKey) && SaveManager.Instance != null)
+            {
+                apiKey = SaveManager.Instance.CurrentData.openAIApiKey;
+            }
+
             if (string.IsNullOrEmpty(apiKey))
             {
                 onError?.Invoke("未设置 OpenAI API Key，请在设置面板中进行配置。");
@@ -70,6 +76,21 @@ namespace DesktopPet.AI
 
         private IEnumerator SendRequestCoroutine(string userMessage, Action<string, string> onSuccess, Action<string> onError)
         {
+            if (SaveManager.Instance != null)
+            {
+                string baseUrl = SaveManager.Instance.CurrentData.llmBaseUrl;
+                if (!string.IsNullOrEmpty(baseUrl))
+                {
+                    apiUrl = baseUrl.TrimEnd('/') + "/v1/chat/completions";
+                }
+
+                string model = SaveManager.Instance.CurrentData.llmModelName;
+                if (!string.IsNullOrEmpty(model))
+                {
+                    modelName = model;
+                }
+            }
+
             RefreshSystemPrompt();
 
             // Add user message to history
