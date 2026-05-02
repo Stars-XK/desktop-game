@@ -281,6 +281,8 @@ namespace DesktopPet.Core
                 dressUpManager.SendMessage("BuildBoneMap", SendMessageOptions.DontRequireReceiver);
             }
 
+            EnsureClickableCollider(characterObj);
+
             // 2. Bind to HitTestProvider
             HitTestProvider hitTest = FindObjectOfType<HitTestProvider>();
             if (hitTest != null)
@@ -302,6 +304,45 @@ namespace DesktopPet.Core
             }
             
             Debug.Log($"[角色加载器] 成功实例化人物 (Successfully instantiated character): {currentCharacterInstance.name}");
+        }
+
+        private static bool TryGetAggregatedBounds(GameObject go, out Bounds b)
+        {
+            b = new Bounds(Vector3.zero, Vector3.zero);
+            if (go == null) return false;
+            Renderer[] rs = go.GetComponentsInChildren<Renderer>(true);
+            bool has = false;
+            for (int i = 0; i < rs.Length; i++)
+            {
+                Renderer r = rs[i];
+                if (r == null) continue;
+                if (!has)
+                {
+                    b = r.bounds;
+                    has = true;
+                }
+                else
+                {
+                    b.Encapsulate(r.bounds);
+                }
+            }
+            return has;
+        }
+
+        private static void EnsureClickableCollider(GameObject characterObj)
+        {
+            if (characterObj == null) return;
+            Collider[] cs = characterObj.GetComponentsInChildren<Collider>(true);
+            if (cs != null && cs.Length > 0) return;
+            if (!TryGetAggregatedBounds(characterObj, out Bounds b)) return;
+
+            CapsuleCollider c = characterObj.AddComponent<CapsuleCollider>();
+            Vector3 centerLocal = characterObj.transform.InverseTransformPoint(b.center);
+            c.center = centerLocal;
+            c.direction = 1;
+            float radius = Mathf.Max(b.extents.x, b.extents.z);
+            c.radius = Mathf.Max(0.02f, radius);
+            c.height = Mathf.Max(c.radius * 2f, b.size.y);
         }
 
         // Public method for UI to call when switching characters
