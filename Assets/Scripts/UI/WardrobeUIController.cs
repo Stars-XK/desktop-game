@@ -932,6 +932,11 @@ namespace DesktopPet.UI
                 WardrobeCardView card = GetCard();
                 card.transform.SetParent(contentContainer, false);
                 card.Bind(item, fav, owned);
+                if (card.fx != null)
+                {
+                    float delay = Mathf.Clamp((i - renderedCount) * 0.03f, 0f, 0.25f);
+                    card.fx.PlayEntrance(delay);
+                }
                 if (card.nameText != null && !string.IsNullOrEmpty(vi.virtualDisplayName))
                 {
                     card.nameText.text = vi.virtualDisplayName;
@@ -1178,6 +1183,19 @@ namespace DesktopPet.UI
 
             Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
+            GameObject highlightGo = new GameObject("FrameHighlight");
+            highlightGo.transform.SetParent(root.transform, false);
+            Image highlight = highlightGo.AddComponent<Image>();
+            highlight.raycastTarget = false;
+            highlight.sprite = WardrobeRaritySkin.GetFrameSprite(ItemRarity.N);
+            highlight.type = Image.Type.Sliced;
+            highlight.color = new Color(1f, 1f, 1f, 0.12f);
+            RectTransform highlightRt = highlightGo.GetComponent<RectTransform>();
+            highlightRt.anchorMin = Vector2.zero;
+            highlightRt.anchorMax = Vector2.one;
+            highlightRt.offsetMin = new Vector2(-2f, -2f);
+            highlightRt.offsetMax = new Vector2(2f, 2f);
+
             GameObject backGo = new GameObject("Backplate");
             backGo.transform.SetParent(root.transform, false);
             Image back = backGo.AddComponent<Image>();
@@ -1319,6 +1337,43 @@ namespace DesktopPet.UI
             ssrBadgeRt.offsetMin = Vector2.zero;
             ssrBadgeRt.offsetMax = Vector2.zero;
 
+            GameObject ssrBadgeGlowGo = new GameObject("Glow");
+            ssrBadgeGlowGo.transform.SetParent(ssrBadgeGo.transform, false);
+            Image ssrBadgeGlowImg = ssrBadgeGlowGo.AddComponent<Image>();
+            ssrBadgeGlowImg.raycastTarget = false;
+            ssrBadgeGlowImg.sprite = WardrobeRaritySkin.GetFrameSprite(ItemRarity.SSR);
+            ssrBadgeGlowImg.type = Image.Type.Sliced;
+            ssrBadgeGlowImg.color = new Color(1f, 0.82f, 0.25f, 0f);
+            RectTransform ssrBadgeGlowRt = ssrBadgeGlowGo.GetComponent<RectTransform>();
+            ssrBadgeGlowRt.anchorMin = new Vector2(0f, 0f);
+            ssrBadgeGlowRt.anchorMax = new Vector2(1f, 1f);
+            ssrBadgeGlowRt.offsetMin = new Vector2(-6f, -6f);
+            ssrBadgeGlowRt.offsetMax = new Vector2(6f, 6f);
+            WardrobeSsrGlow ssrBadgeGlow = ssrBadgeGlowGo.AddComponent<WardrobeSsrGlow>();
+            ssrBadgeGlow.glowImage = ssrBadgeGlowImg;
+            ssrBadgeGlow.alpha = 0.45f;
+            ssrBadgeGlow.scale = 1.08f;
+            ssrBadgeGlow.speed = 1.15f;
+            ssrBadgeGlow.enabled = false;
+
+            GameObject ssrBadgeShineGo = new GameObject("Shine");
+            ssrBadgeShineGo.transform.SetParent(ssrBadgeGo.transform, false);
+            RectTransform ssrBadgeShineRt = ssrBadgeShineGo.AddComponent<RectTransform>();
+            ssrBadgeShineRt.anchorMin = new Vector2(0.5f, 0.5f);
+            ssrBadgeShineRt.anchorMax = new Vector2(0.5f, 0.5f);
+            ssrBadgeShineRt.sizeDelta = new Vector2(40f, 140f);
+            ssrBadgeShineRt.anchoredPosition = new Vector2(-80f, 0f);
+            ssrBadgeShineRt.localRotation = Quaternion.Euler(0f, 0f, 22f);
+            Image ssrBadgeShineImg = ssrBadgeShineGo.AddComponent<Image>();
+            ssrBadgeShineImg.raycastTarget = false;
+            ssrBadgeShineImg.color = new Color(1f, 0.95f, 0.7f, 0f);
+            WardrobeSsrShine ssrBadgeShine = ssrBadgeShineGo.AddComponent<WardrobeSsrShine>();
+            ssrBadgeShine.shineRect = ssrBadgeShineRt;
+            ssrBadgeShine.shineImage = ssrBadgeShineImg;
+            ssrBadgeShine.duration = 0.9f;
+            ssrBadgeShine.interval = 1.8f;
+            ssrBadgeShine.enabled = false;
+
             GameObject ssrBadgeTextGo = new GameObject("Text");
             ssrBadgeTextGo.transform.SetParent(ssrBadgeGo.transform, false);
             Text ssrBadgeText = ssrBadgeTextGo.AddComponent<Text>();
@@ -1347,8 +1402,11 @@ namespace DesktopPet.UI
 
             WardrobeCardFX fx = root.AddComponent<WardrobeCardFX>();
             fx.backplateImage = back;
+            fx.frameHighlight = highlight;
             fx.ssrGlow = glow;
             fx.ssrSparkle = spark;
+            fx.badgeShine = ssrBadgeShine;
+            fx.badgeGlow = ssrBadgeGlow;
             view.fx = fx;
 
             favGo.SetActive(true);
