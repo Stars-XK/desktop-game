@@ -36,30 +36,38 @@ namespace DesktopPet.EditorTools
             BuildAssetBundle(bundleName, new[] { assetPath });
         }
 
-        [MenuItem("DesktopPet/VRM/Build All Prefabs In Assets/ThirdParty/VRM")]
+        [MenuItem("DesktopPet/VRM/Build All Prefabs In VRM Folders")]
         private static void BuildAllInFolder()
         {
-            string folder = "Assets/ThirdParty/VRM";
-            if (!AssetDatabase.IsValidFolder(folder))
+            string[] folders =
             {
-                EditorUtility.DisplayDialog("VRM 打包", "未找到 Assets/ThirdParty/VRM 目录。你可以自己创建目录，然后把 .vrm 拖进去。", "OK");
-                return;
+                "Assets/ThirdParty/VRM",
+                "Assets/Art/Models/VRM"
+            };
+
+            bool anyBuilt = false;
+            for (int fi = 0; fi < folders.Length; fi++)
+            {
+                if (!AssetDatabase.IsValidFolder(folders[fi])) continue;
+
+                string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { folders[fi] });
+                if (guids == null || guids.Length == 0) continue;
+
+                for (int i = 0; i < guids.Length; i++)
+                {
+                    string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    if (string.IsNullOrEmpty(assetPath)) continue;
+                    string prefabName = Path.GetFileNameWithoutExtension(assetPath);
+                    string bundleName = "character_" + SanitizeBundleName(prefabName);
+                    BuildAssetBundle(bundleName, new[] { assetPath });
+                    anyBuilt = true;
+                }
             }
 
-            string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { folder });
-            if (guids == null || guids.Length == 0)
+            if (!anyBuilt)
             {
-                EditorUtility.DisplayDialog("VRM 打包", "该目录下没有 prefab。导入 .vrm 后会生成 prefab。", "OK");
+                EditorUtility.DisplayDialog("VRM 打包", "未找到可打包的 prefab。请把 .vrm 放到 Assets/Art/Models/VRM 或 Assets/ThirdParty/VRM，并等待导入生成 prefab。", "OK");
                 return;
-            }
-
-            for (int i = 0; i < guids.Length; i++)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
-                if (string.IsNullOrEmpty(assetPath)) continue;
-                string prefabName = Path.GetFileNameWithoutExtension(assetPath);
-                string bundleName = "character_" + SanitizeBundleName(prefabName);
-                BuildAssetBundle(bundleName, new[] { assetPath });
             }
 
             EditorUtility.DisplayDialog("VRM 打包", "完成。生成文件在项目根目录 Mods/ 下。", "OK");
@@ -116,4 +124,3 @@ namespace DesktopPet.EditorTools
         }
     }
 }
-

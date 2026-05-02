@@ -13,16 +13,18 @@
 
 ## 2. 导入到 Unity（只要拖进去）
 
-- 在 Unity Project 面板创建目录：`Assets/ThirdParty/VRM/`
-- 把 `.vrm` 文件拖进该目录
+- 推荐放置目录（二选一即可）：
+  - `Assets/Art/Models/VRM/`
+  - `Assets/ThirdParty/VRM/`
+- 把 `.vrm` 文件拖进你选择的目录
 - 等待导入完成（会生成 prefab）
 
 ## 3. 一键打包成 Mods 套装（只要点菜单）
 
 - 方式 A（单个）：在 Project 面板选中某个导入后的 `prefab`
   - 菜单：`DesktopPet/VRM/Build Selected Prefab As Character Bundle`
-- 方式 B（批量）：把多个 `.vrm` 都放在 `Assets/ThirdParty/VRM/`，导入后
-  - 菜单：`DesktopPet/VRM/Build All Prefabs In Assets/ThirdParty/VRM`
+- 方式 B（批量）：把多个 `.vrm` 放到上述目录之一，导入后
+  - 菜单：`DesktopPet/VRM/Build All Prefabs In VRM Folders`
 
 输出位置：
 - 项目根目录：`Mods/`
@@ -33,4 +35,3 @@
 - Play 运行
 - 打开“衣橱”
 - 左侧会有“套装”下拉，选一个 `character_*` 即可一键切换
-
