@@ -165,8 +165,10 @@ namespace DesktopPet.Core
 
             // Instantiate the first prefab found in the bundle
             GameObject prefabToSpawn = prefabs[0];
-            currentCharacterInstance = Instantiate(prefabToSpawn);
+            currentCharacterInstance = Instantiate(prefabToSpawn, Vector3.zero, Quaternion.identity);
             currentCharacterInstance.name = prefabToSpawn.name;
+            currentCharacterInstance.transform.localScale = Vector3.one;
+            currentCharacterInstance.SetActive(true);
 
             // Bind the instantiated character to the existing systems
             BindCharacterToSystems(currentCharacterInstance);
