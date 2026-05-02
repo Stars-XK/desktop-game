@@ -31,6 +31,7 @@ namespace DesktopPet.Core
             EnsureWardrobeUIController();
             EnsureShowroomControllers();
             EnsureVoiceControllers();
+            EnsureGirlfriendControllers();
             EnsureEditorFallbackCharacter();
             EnsureEditorCameraVisible();
         }
@@ -129,6 +130,23 @@ namespace DesktopPet.Core
             vic.aiManager = aiManager;
             vic.uiManager = uiManager;
             vic.showroomUI = GetComponent<WardrobeShowroomUI>();
+        }
+
+        private void EnsureGirlfriendControllers()
+        {
+            if (aiManager == null) return;
+
+            MemoryManager mm = GetComponent<MemoryManager>();
+            if (mm == null) mm = gameObject.AddComponent<MemoryManager>();
+            mm.llmProvider = aiManager.llmProviderComponent as OpenAILLMProvider;
+
+            aiManager.memoryManager = mm;
+
+            ProactiveCompanion pc = GetComponent<ProactiveCompanion>();
+            if (pc == null) pc = gameObject.AddComponent<ProactiveCompanion>();
+            pc.aiManager = aiManager;
+            pc.uiManager = uiManager;
+            pc.wardrobeUI = GetComponent<WardrobeUIController>();
         }
 
         private void BindShowroomTarget()
