@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -684,6 +685,7 @@ namespace DesktopPet.UI
         public void ShowCategory(ClothingType category)
         {
             currentCategory = category;
+            TouchWardrobeAction();
             RefreshCurrent();
         }
 
@@ -905,6 +907,16 @@ namespace DesktopPet.UI
             }
         }
 
+        private static void TouchWardrobeAction()
+        {
+            if (DesktopPet.Data.SaveManager.Instance == null) return;
+            var d = DesktopPet.Data.SaveManager.Instance.CurrentData;
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (d.lastWardrobeActionUnix != 0 && now - d.lastWardrobeActionUnix <= 1) return;
+            d.lastWardrobeActionUnix = now;
+            DesktopPet.Data.SaveManager.Instance.SaveData();
+        }
+
         private void BuildVirtualQuery(List<WardrobeItemDefinition> baseItems)
         {
             if (baseItems == null) return;
@@ -992,6 +1004,7 @@ namespace DesktopPet.UI
                     card.button.onClick.RemoveAllListeners();
                     card.button.onClick.AddListener(() =>
                     {
+                        TouchWardrobeAction();
                         dressUpManager.EquipPart(item.prefab);
                         lastEquippedType = item.clothingType;
 
@@ -1023,6 +1036,7 @@ namespace DesktopPet.UI
                     card.favoriteButton.onClick.RemoveAllListeners();
                     card.favoriteButton.onClick.AddListener(() =>
                     {
+                        TouchWardrobeAction();
                         wardrobeManager.Inventory.ToggleFavorite(item.itemId);
                         bool nowFav = wardrobeManager.Inventory.IsFavorite(item.itemId);
                         if (card.favoriteText != null) card.favoriteText.text = nowFav ? "★" : "☆";
@@ -1096,6 +1110,7 @@ namespace DesktopPet.UI
                 {
                     btn.onClick.AddListener(() =>
                     {
+                        TouchWardrobeAction();
                         if (tagFilter.Contains(tag))
                         {
                             tagFilter.Remove(tag);

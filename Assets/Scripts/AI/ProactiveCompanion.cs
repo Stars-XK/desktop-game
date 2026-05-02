@@ -21,7 +21,8 @@ namespace DesktopPet.AI
             var d = SaveManager.Instance.CurrentData;
             if (!d.enableProactive) return;
 
-            if (wardrobeUI != null && wardrobeUI.IsDrawerOpen)
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (d.lastWardrobeActionUnix != 0 && now - d.lastWardrobeActionUnix < 6)
             {
                 idleTimer = 0f;
                 return;
@@ -38,7 +39,6 @@ namespace DesktopPet.AI
 
             if (idleTimer < minInterval) return;
 
-            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (d.lastProactiveUnix != 0 && now - d.lastProactiveUnix < (long)minInterval) return;
 
             d.lastProactiveUnix = now;
@@ -46,10 +46,9 @@ namespace DesktopPet.AI
             idleTimer = 0f;
 
             string seed =
-                "（系统提示）你主动跟用户轻松搭话，话题优先围绕穿搭试衣间：夸一句、给一个换色/搭配建议，语气甜一点，别太长。";
+                "（系统提示）用户刚停下来，你不要打扰太频繁。请你像女朋友一样轻声插一句：优先围绕穿搭试衣间，夸一句 + 给一个换色/搭配建议，语气甜一点，别太长。";
             aiManager.ProcessUserInput(seed);
             uiManager?.AppendToChat("<color=#A9A9A9><i>小优主动开口...</i></color>");
         }
     }
 }
-
