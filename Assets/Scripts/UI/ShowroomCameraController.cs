@@ -33,6 +33,8 @@ namespace DesktopPet.UI
         private float originalDistance;
         private float originalPitch;
         private Vector3 originalTargetOffset;
+        private float originalFov;
+        private float desiredFov;
 
         private void Awake()
         {
@@ -40,6 +42,8 @@ namespace DesktopPet.UI
             baseYaw = yaw;
             baseDistance = distance;
             baseFov = cam != null ? cam.fieldOfView : 60f;
+            originalFov = baseFov;
+            desiredFov = baseFov;
         }
 
         public void SetPhotoModeActive(bool active)
@@ -54,6 +58,7 @@ namespace DesktopPet.UI
                 originalDistance = distance;
                 originalPitch = pitch;
                 originalTargetOffset = targetOffset;
+                originalFov = cam != null ? cam.fieldOfView : baseFov;
                 enableBreathing = false;
             }
             else
@@ -62,6 +67,8 @@ namespace DesktopPet.UI
                 distance = originalDistance;
                 pitch = originalPitch;
                 targetOffset = originalTargetOffset;
+                if (cam != null) cam.fieldOfView = originalFov;
+                desiredFov = cam != null ? cam.fieldOfView : desiredFov;
             }
         }
 
@@ -96,8 +103,8 @@ namespace DesktopPet.UI
             if (cam == null) return;
 
             float targetFov = preset == 0 ? 58f : (preset == 1 ? 44f : 28f);
-            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFov, 0.65f);
-            baseFov = cam.fieldOfView;
+            desiredFov = targetFov;
+            baseFov = desiredFov;
         }
 
         private void Update()
@@ -149,6 +156,7 @@ namespace DesktopPet.UI
 
             cam.transform.position = Vector3.Lerp(cam.transform.position, desiredPos, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
             cam.transform.rotation = Quaternion.Slerp(cam.transform.rotation, desiredRot, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
+            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, desiredFov, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
         }
     }
 }
