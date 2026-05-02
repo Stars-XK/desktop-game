@@ -134,6 +134,7 @@ namespace DesktopPet.Data
                 {
                     string json = File.ReadAllText(savePath);
                     CurrentData = JsonUtility.FromJson<PetSaveData>(json);
+                    if (CurrentData == null) CurrentData = new PetSaveData();
                     EnsureDefaults(CurrentData);
                     Debug.Log("[存档系统] 数据加载成功 (Data loaded successfully).");
                 }
