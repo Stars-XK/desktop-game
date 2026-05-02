@@ -59,6 +59,9 @@ namespace DesktopPet.UI
         private readonly List<WardrobePresetSlotView> presetSlots = new List<WardrobePresetSlotView>();
         private RectTransform drawerRootRt;
         private CanvasGroup drawerCanvasGroup;
+        private GameObject loadingOverlayRoot;
+        private CanvasGroup loadingOverlayCg;
+        private Text loadingOverlayText;
         private float drawerWidth = 900f;
         private bool drawerOpen;
         private Coroutine drawerRoutine;
@@ -254,6 +257,46 @@ namespace DesktopPet.UI
             EnsureFilterPanel(drawerRoot, resources);
             EnsurePresetBar(drawerRoot, resources);
             EnsureDyePanel(drawerRoot, resources);
+
+            EnsureLoadingOverlay(drawerRoot);
+        }
+
+        private void EnsureLoadingOverlay(GameObject drawerRoot)
+        {
+            if (loadingOverlayRoot != null) return;
+            if (drawerRoot == null) return;
+
+            GameObject parent = wardrobePanel != null ? wardrobePanel : drawerRoot;
+            loadingOverlayRoot = new GameObject("LoadingOverlay");
+            loadingOverlayRoot.transform.SetParent(parent.transform, false);
+            Image bg = loadingOverlayRoot.AddComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
+            bg.color = new Color(1f, 1f, 1f, 0.92f);
+            RectTransform rt = loadingOverlayRoot.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            loadingOverlayCg = loadingOverlayRoot.AddComponent<CanvasGroup>();
+            loadingOverlayCg.alpha = 0f;
+            loadingOverlayCg.blocksRaycasts = false;
+            loadingOverlayCg.interactable = false;
+
+            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            GameObject textGo = new GameObject("Text");
+            textGo.transform.SetParent(loadingOverlayRoot.transform, false);
+            loadingOverlayText = textGo.AddComponent<Text>();
+            loadingOverlayText.font = font;
+            loadingOverlayText.text = "加载中…";
+            loadingOverlayText.fontSize = 20;
+            loadingOverlayText.alignment = TextAnchor.MiddleCenter;
+            loadingOverlayText.color = WardrobeThemeFactory.TextMain;
+            RectTransform trt = textGo.GetComponent<RectTransform>();
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = Vector2.zero;
+            trt.offsetMax = Vector2.zero;
         }
 
         private void EnsureDyePanel(GameObject canvasGo, DefaultControls.Resources resources)
@@ -855,6 +898,8 @@ namespace DesktopPet.UI
         private IEnumerator RefreshCurrentRoutine()
         {
             EnsureGridLayout();
+            EnsureLoadingOverlay(drawerRootRt != null ? drawerRootRt.gameObject : null);
+            yield return FadeOverlay(true);
             yield return FadeOutCards();
 
             ReleaseAllCards();
@@ -874,6 +919,7 @@ namespace DesktopPet.UI
 
             renderedCount = 0;
             RenderNextPage();
+            yield return FadeOverlay(false);
             refreshRoutine = null;
         }
 
@@ -882,6 +928,7 @@ namespace DesktopPet.UI
             if (activeCards.Count == 0) yield break;
 
             CanvasGroup[] groups = new CanvasGroup[activeCards.Count];
+            Vector2[] basePositions = new Vector2[activeCards.Count];
             for (int i = 0; i < activeCards.Count; i++)
             {
                 WardrobeCardView v = activeCards[i];
@@ -890,6 +937,8 @@ namespace DesktopPet.UI
                 if (cg == null) cg = v.gameObject.AddComponent<CanvasGroup>();
                 cg.alpha = 1f;
                 groups[i] = cg;
+                RectTransform rt = v.GetComponent<RectTransform>();
+                if (rt != null) basePositions[i] = rt.anchoredPosition;
             }
 
             float t = 0f;
@@ -902,9 +951,33 @@ namespace DesktopPet.UI
                 for (int i = 0; i < groups.Length; i++)
                 {
                     if (groups[i] != null) groups[i].alpha = alpha;
+                    WardrobeCardView v = activeCards[i];
+                    if (v != null)
+                    {
+                        RectTransform rt = v.GetComponent<RectTransform>();
+                        if (rt != null) rt.anchoredPosition = basePositions[i] + new Vector2(0f, -2f * a);
+                    }
                 }
                 yield return null;
             }
+        }
+
+        private IEnumerator FadeOverlay(bool show)
+        {
+            if (loadingOverlayCg == null) yield break;
+            float from = loadingOverlayCg.alpha;
+            float to = show ? 1f : 0f;
+            float t = 0f;
+            float dur = 0.08f;
+            while (t < dur)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / dur);
+                float v = Mathf.Lerp(from, to, UIAnim.EaseOutCubic(a));
+                loadingOverlayCg.alpha = v;
+                yield return null;
+            }
+            loadingOverlayCg.alpha = to;
         }
 
         private static void TouchWardrobeAction()
