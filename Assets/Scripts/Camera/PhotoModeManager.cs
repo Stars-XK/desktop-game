@@ -15,6 +15,10 @@ namespace DesktopPet.CameraSys
         [Header("拍照时隐藏的 UI (UI to Hide)")]
         public GameObject[] uiElementsToHide;
 
+        public event Action<string> ScreenshotSaved;
+        public event Action<string> ScreenshotFailed;
+        public string lastSavedPath;
+
         private void Start()
         {
             if (photoCamera == null) photoCamera = Camera.main;
@@ -27,58 +31,65 @@ namespace DesktopPet.CameraSys
 
         private IEnumerator CaptureScreenshotCoroutine()
         {
-            // 1. Hide UI
-            foreach (var ui in uiElementsToHide)
+            try
             {
-                if (ui != null) ui.SetActive(false);
+                foreach (var ui in uiElementsToHide)
+                {
+                    if (ui != null) ui.SetActive(false);
+                }
+
+                yield return new WaitForEndOfFrame();
+
+                int resWidth = Screen.width * resolutionMultiplier;
+                int resHeight = Screen.height * resolutionMultiplier;
+
+                RenderTexture rt = new RenderTexture(resWidth, resHeight, 24, RenderTextureFormat.ARGB32);
+                photoCamera.targetTexture = rt;
+
+                Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
+                photoCamera.Render();
+
+                RenderTexture.active = rt;
+                screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
+                screenShot.Apply();
+
+                photoCamera.targetTexture = null;
+                RenderTexture.active = null;
+                Destroy(rt);
+
+                foreach (var ui in uiElementsToHide)
+                {
+                    if (ui != null) ui.SetActive(true);
+                }
+
+                byte[] bytes = screenShot.EncodeToPNG();
+                Destroy(screenShot);
+
+                string dirPath = Path.Combine(Application.dataPath, "..", screenshotsFolder);
+                if (!Directory.Exists(dirPath))
+                {
+                    Directory.CreateDirectory(dirPath);
+                }
+
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                string filename = $"Pet_{timestamp}.png";
+                string fullPath = Path.Combine(dirPath, filename);
+
+                File.WriteAllBytes(fullPath, bytes);
+                lastSavedPath = fullPath;
+                Debug.Log($"照片已保存 (Screenshot saved): {fullPath}");
+                ScreenshotSaved?.Invoke(fullPath);
             }
-
-            // Wait for end of frame to ensure UI is hidden
-            yield return new WaitForEndOfFrame();
-
-            // 2. Setup Render Texture
-            int resWidth = Screen.width * resolutionMultiplier;
-            int resHeight = Screen.height * resolutionMultiplier;
-            
-            RenderTexture rt = new RenderTexture(resWidth, resHeight, 24, RenderTextureFormat.ARGB32);
-            photoCamera.targetTexture = rt;
-            
-            // Render
-            Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
-            photoCamera.Render();
-            
-            // Read Pixels
-            RenderTexture.active = rt;
-            screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
-            screenShot.Apply();
-            
-            // 3. Cleanup Render Texture
-            photoCamera.targetTexture = null;
-            RenderTexture.active = null;
-            Destroy(rt);
-
-            // 4. Show UI again
-            foreach (var ui in uiElementsToHide)
+            catch (Exception e)
             {
-                if (ui != null) ui.SetActive(true);
+                foreach (var ui in uiElementsToHide)
+                {
+                    if (ui != null) ui.SetActive(true);
+                }
+                string msg = e != null ? e.Message : "Screenshot failed";
+                Debug.LogError($"拍照失败 (Screenshot failed): {msg}");
+                ScreenshotFailed?.Invoke(msg);
             }
-
-            // 5. Encode and Save
-            byte[] bytes = screenShot.EncodeToPNG();
-            Destroy(screenShot);
-
-            string dirPath = Path.Combine(Application.dataPath, "..", screenshotsFolder);
-            if (!Directory.Exists(dirPath))
-            {
-                Directory.CreateDirectory(dirPath);
-            }
-
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            string filename = $"Pet_{timestamp}.png";
-            string fullPath = Path.Combine(dirPath, filename);
-
-            File.WriteAllBytes(fullPath, bytes);
-            Debug.Log($"照片已保存 (Screenshot saved): {fullPath}");
         }
     }
 }
