@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using DesktopPet.Data;
 using DesktopPet.DressUp;
@@ -52,8 +53,31 @@ namespace DesktopPet.Core
             bool isCharacterLoaded = false;
             if (characterLoader != null)
             {
-                // If DressUpManager doesn't already have a rootBone, assume we need to load a character from Mod
-                if (dressUpManager != null && dressUpManager.rootBone == null)
+                string modsDir = Path.Combine(Application.dataPath, "..", "Mods");
+                string selected = saveManager != null && saveManager.CurrentData != null ? saveManager.CurrentData.selectedCharacterBundleName : "";
+
+                bool hasCharacterBundle = false;
+                if (Directory.Exists(modsDir))
+                {
+                    if (!string.IsNullOrEmpty(selected) && File.Exists(Path.Combine(modsDir, selected)))
+                    {
+                        hasCharacterBundle = true;
+                    }
+                    else
+                    {
+                        string[] files = Directory.GetFiles(modsDir, "character_*", SearchOption.TopDirectoryOnly);
+                        for (int i = 0; i < files.Length; i++)
+                        {
+                            string name = Path.GetFileName(files[i]);
+                            if (string.IsNullOrEmpty(name)) continue;
+                            if (name.EndsWith(".manifest") || name.EndsWith(".meta")) continue;
+                            hasCharacterBundle = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (hasCharacterBundle)
                 {
                     yield return characterLoader.LoadCharacterFromSaveCoroutine(() => isCharacterLoaded = true);
                 }

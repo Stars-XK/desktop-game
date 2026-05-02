@@ -159,6 +159,8 @@ namespace DesktopPet.Core
                 return;
             }
 
+            DestroyExistingSceneCharacter();
+
             if (currentCharacterInstance != null)
             {
                 Destroy(currentCharacterInstance);
@@ -187,6 +189,30 @@ namespace DesktopPet.Core
 
             // Bind the instantiated character to the existing systems
             BindCharacterToSystems(currentCharacterInstance);
+        }
+
+        private void DestroyExistingSceneCharacter()
+        {
+            if (dressUpManager == null || dressUpManager.rootBone == null) return;
+
+            Animator anim = dressUpManager.rootBone.GetComponentInParent<Animator>();
+            if (anim == null) return;
+
+            Transform best = anim.transform;
+            Transform cursor = anim.transform;
+            while (cursor != null)
+            {
+                if (cursor.name.StartsWith("P_")) best = cursor;
+                cursor = cursor.parent;
+            }
+
+            if (best == null) return;
+            if (currentCharacterInstance != null && best.gameObject == currentCharacterInstance) return;
+            if (best.gameObject == gameObject) return;
+            if (best.gameObject.name == "MainScene") return;
+            if (best.GetComponent<AppBootstrapper>() != null) return;
+
+            Destroy(best.gameObject);
         }
 
         private static GameObject SelectBestCharacterPrefab(GameObject[] prefabs, GameObject exclude = null)
