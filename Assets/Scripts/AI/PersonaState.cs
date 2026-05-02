@@ -9,6 +9,7 @@ namespace DesktopPet.AI
         public string personaStyle;
         public string longTermSummary;
         public string factsJson;
+        public string currentMood;
+        public string milestones;
     }
 }
-

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using DesktopPet.Data;
 
@@ -40,6 +41,15 @@ namespace DesktopPet.AI
                 if (SaveManager.Instance != null)
                 {
                     var d = SaveManager.Instance.CurrentData;
+                    long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    string mood = d.currentMood;
+                    if (d.moodExpireUnix != 0 && now > d.moodExpireUnix) mood = "idle";
+
+                    string milestones = "";
+                    if (d.milestoneMemories != null && d.milestoneMemories.Count > 0)
+                    {
+                        milestones = string.Join("\n", d.milestoneMemories);
+                    }
                     PersonaState ps = new PersonaState
                     {
                         petName = d.petName,
@@ -48,7 +58,9 @@ namespace DesktopPet.AI
                         relationshipXp = d.relationshipXp,
                         personaStyle = d.personaStyle,
                         longTermSummary = d.longTermSummary,
-                        factsJson = d.factsJson
+                        factsJson = d.factsJson,
+                        currentMood = mood,
+                        milestones = milestones
                     };
                     openai.SetPersonaState(ps);
                 }

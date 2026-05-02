@@ -190,12 +190,16 @@ namespace DesktopPet.AI
                 string style = string.IsNullOrEmpty(personaState.personaStyle) ? "温柔甜系，有点傲娇，爱打扮" : personaState.personaStyle;
                 string summary = personaState.longTermSummary ?? "";
                 string facts = string.IsNullOrEmpty(personaState.factsJson) ? "{}" : personaState.factsJson;
+                string mood = string.IsNullOrEmpty(personaState.currentMood) ? "idle" : personaState.currentMood;
+                string milestones = personaState.milestones ?? "";
 
                 dynamic =
                     systemPrompt + "\n\n" +
                     $"【角色】你叫{petName}，对用户称呼“{userNick}”。风格：{style}。关系等级：Lv{personaState.relationshipLevel}。\n" +
+                    $"【当前心情】{mood}\n" +
                     $"【长期记忆】{summary}\n" +
                     $"【偏好/事实JSON】{facts}\n" +
+                    $"【里程碑记忆】{milestones}\n" +
                     "输出要求：每次回复开头必须是 [emotion]，emotion 仅用英文小写。回复简短口语，带语气词。";
             }
 
