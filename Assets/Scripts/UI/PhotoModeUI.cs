@@ -148,7 +148,7 @@ namespace DesktopPet.UI
             if (canvas == null) return;
 
             DefaultControls.Resources resources = new DefaultControls.Resources();
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             root = new GameObject("PhotoModeUI");
             root.transform.SetParent(canvas.transform, false);

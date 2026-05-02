@@ -109,6 +109,8 @@ namespace DesktopPet.UI
 
         private void Update()
         {
+            if (cam == null) cam = Camera.main;
+            if (target == null) TryAutoBindTarget();
             if (target == null || cam == null) return;
 
             if (Input.GetMouseButtonDown(0)) dragging = true;
@@ -136,6 +138,8 @@ namespace DesktopPet.UI
 
         private void LateUpdate()
         {
+            if (cam == null) cam = Camera.main;
+            if (target == null) TryAutoBindTarget();
             if (target == null || cam == null) return;
 
             float y = yaw;
@@ -157,6 +161,37 @@ namespace DesktopPet.UI
             cam.transform.position = Vector3.Lerp(cam.transform.position, desiredPos, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
             cam.transform.rotation = Quaternion.Slerp(cam.transform.rotation, desiredRot, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
             cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, desiredFov, 1f - Mathf.Exp(-smooth * Time.unscaledDeltaTime));
+        }
+
+        private void TryAutoBindTarget()
+        {
+            if (target != null) return;
+
+            var dm = FindObjectOfType<DesktopPet.DressUp.DressUpManager>();
+            Transform t = null;
+            if (dm != null && dm.rootBone != null)
+            {
+                t = dm.rootBone;
+                if (t.parent != null) t = t.parent;
+            }
+            if (t == null)
+            {
+                var anim = FindObjectOfType<Animator>();
+                if (anim != null) t = anim.transform;
+            }
+            if (t == null)
+            {
+                var r = FindObjectOfType<Renderer>();
+                if (r != null) t = r.transform;
+            }
+
+            if (t == null) return;
+            target = t;
+
+            var lights = GetComponent<ShowroomLightingRig>();
+            if (lights != null && lights.target == null) lights.target = t;
+            var sp = GetComponent<AmbientSparkles>();
+            if (sp != null && sp.target == null) sp.target = t;
         }
     }
 }

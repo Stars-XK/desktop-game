@@ -64,7 +64,9 @@ namespace DesktopPet.UI
 
             var velocity = ps.velocityOverLifetime;
             velocity.enabled = true;
-            velocity.y = new ParticleSystem.MinMaxCurve(0.05f, 0.12f);
+            velocity.x = new ParticleSystem.MinMaxCurve(0f);
+            velocity.y = new ParticleSystem.MinMaxCurve(0.08f);
+            velocity.z = new ParticleSystem.MinMaxCurve(0f);
 
             var noise = ps.noise;
             noise.enabled = true;
@@ -79,4 +81,3 @@ namespace DesktopPet.UI
         }
     }
 }
-

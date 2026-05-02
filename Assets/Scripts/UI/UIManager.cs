@@ -186,7 +186,7 @@ namespace DesktopPet.UI
                 settingsPanel.SetActive(false);
             }
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             if (apiKeyInputField == null)
             {

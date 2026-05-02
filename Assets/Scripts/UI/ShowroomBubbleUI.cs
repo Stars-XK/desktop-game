@@ -80,7 +80,7 @@ namespace DesktopPet.UI
             rt.offsetMax = Vector2.zero;
             rt.localScale = Vector3.one;
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             GameObject nameGo = new GameObject("Name");
             nameGo.transform.SetParent(root.transform, false);

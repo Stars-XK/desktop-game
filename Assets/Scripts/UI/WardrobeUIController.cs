@@ -283,7 +283,7 @@ namespace DesktopPet.UI
             loadingOverlayCg.blocksRaycasts = false;
             loadingOverlayCg.interactable = false;
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             GameObject textGo = new GameObject("Text");
             textGo.transform.SetParent(loadingOverlayRoot.transform, false);
             loadingOverlayText = textGo.AddComponent<Text>();
@@ -323,7 +323,7 @@ namespace DesktopPet.UI
             vlg.spacing = 10f;
             vlg.padding = new RectOffset(10, 10, 12, 12);
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             GameObject titleGo = new GameObject("Title");
             titleGo.transform.SetParent(dyePanelRoot.transform, false);
@@ -484,7 +484,7 @@ namespace DesktopPet.UI
             vlg.spacing = 10f;
             vlg.padding = new RectOffset(10, 10, 12, 12);
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             GameObject searchGo = DefaultControls.CreateInputField(resources);
             searchGo.name = "SearchInput";
@@ -604,7 +604,7 @@ namespace DesktopPet.UI
             hlg.spacing = 8f;
             hlg.padding = new RectOffset(12, 12, 10, 10);
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             for (int i = 0; i < 10; i++)
             {
@@ -1151,7 +1151,7 @@ namespace DesktopPet.UI
             if (tags.Count == 0) return;
 
             DefaultControls.Resources resources = new DefaultControls.Resources();
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             List<string> ordered = new List<string>(tags);
             ordered.Sort(CompareTag);
@@ -1314,7 +1314,7 @@ namespace DesktopPet.UI
             Image frame = root.GetComponent<Image>();
             frame.type = Image.Type.Sliced;
 
-            Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             GameObject highlightGo = new GameObject("FrameHighlight");
             highlightGo.transform.SetParent(root.transform, false);
