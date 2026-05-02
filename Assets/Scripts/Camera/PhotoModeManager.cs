@@ -31,39 +31,34 @@ namespace DesktopPet.CameraSys
 
         private IEnumerator CaptureScreenshotCoroutine()
         {
+            foreach (var ui in uiElementsToHide)
+            {
+                if (ui != null) ui.SetActive(false);
+            }
+
+            yield return new WaitForEndOfFrame();
+
+            string fullPath = null;
+            string error = null;
+            RenderTexture rt = null;
+            Texture2D screenShot = null;
+
             try
             {
-                foreach (var ui in uiElementsToHide)
-                {
-                    if (ui != null) ui.SetActive(false);
-                }
-
-                yield return new WaitForEndOfFrame();
-
                 int resWidth = Screen.width * resolutionMultiplier;
                 int resHeight = Screen.height * resolutionMultiplier;
 
-                RenderTexture rt = new RenderTexture(resWidth, resHeight, 24, RenderTextureFormat.ARGB32);
+                rt = new RenderTexture(resWidth, resHeight, 24, RenderTextureFormat.ARGB32);
                 photoCamera.targetTexture = rt;
 
-                Texture2D screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
+                screenShot = new Texture2D(resWidth, resHeight, TextureFormat.ARGB32, false);
                 photoCamera.Render();
 
                 RenderTexture.active = rt;
                 screenShot.ReadPixels(new Rect(0, 0, resWidth, resHeight), 0, 0);
                 screenShot.Apply();
 
-                photoCamera.targetTexture = null;
-                RenderTexture.active = null;
-                Destroy(rt);
-
-                foreach (var ui in uiElementsToHide)
-                {
-                    if (ui != null) ui.SetActive(true);
-                }
-
                 byte[] bytes = screenShot.EncodeToPNG();
-                Destroy(screenShot);
 
                 string dirPath = Path.Combine(Application.dataPath, "..", screenshotsFolder);
                 if (!Directory.Exists(dirPath))
@@ -73,22 +68,37 @@ namespace DesktopPet.CameraSys
 
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
                 string filename = $"Pet_{timestamp}.png";
-                string fullPath = Path.Combine(dirPath, filename);
+                fullPath = Path.Combine(dirPath, filename);
 
                 File.WriteAllBytes(fullPath, bytes);
-                lastSavedPath = fullPath;
-                Debug.Log($"照片已保存 (Screenshot saved): {fullPath}");
-                ScreenshotSaved?.Invoke(fullPath);
             }
             catch (Exception e)
             {
+                error = e != null ? e.Message : "Screenshot failed";
+            }
+            finally
+            {
+                photoCamera.targetTexture = null;
+                RenderTexture.active = null;
+                if (rt != null) Destroy(rt);
+                if (screenShot != null) Destroy(screenShot);
+
                 foreach (var ui in uiElementsToHide)
                 {
                     if (ui != null) ui.SetActive(true);
                 }
-                string msg = e != null ? e.Message : "Screenshot failed";
-                Debug.LogError($"拍照失败 (Screenshot failed): {msg}");
-                ScreenshotFailed?.Invoke(msg);
+            }
+
+            if (string.IsNullOrEmpty(error))
+            {
+                lastSavedPath = fullPath;
+                Debug.Log($"照片已保存 (Screenshot saved): {fullPath}");
+                ScreenshotSaved?.Invoke(fullPath);
+            }
+            else
+            {
+                Debug.LogError($"拍照失败 (Screenshot failed): {error}");
+                ScreenshotFailed?.Invoke(error);
             }
         }
     }

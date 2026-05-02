@@ -818,9 +818,9 @@ namespace DesktopPet.UI
             if (allowFullBody)
             {
                 List<WardrobeItemDefinition> full = wardrobeManager.GetItems(ClothingType.FullBody, "", false, true, null, null, WardrobeSortMode.RarityDesc);
-                if (full != null && full.Count > 0 && Random.value < 0.25f)
+                if (full != null && full.Count > 0 && UnityEngine.Random.value < 0.25f)
                 {
-                    EquipDefinition(full[Random.Range(0, full.Count)]);
+                    EquipDefinition(full[UnityEngine.Random.Range(0, full.Count)]);
                     return;
                 }
             }
@@ -836,7 +836,7 @@ namespace DesktopPet.UI
         {
             List<WardrobeItemDefinition> list = wardrobeManager.GetItems(type, "", false, true, null, null, WardrobeSortMode.RarityDesc);
             if (list == null || list.Count == 0) return;
-            EquipDefinition(list[Random.Range(0, list.Count)]);
+            EquipDefinition(list[UnityEngine.Random.Range(0, list.Count)]);
         }
 
         private void RecommendOutfit()
