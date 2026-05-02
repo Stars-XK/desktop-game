@@ -840,7 +840,21 @@ namespace DesktopPet.UI
 
         private void RefreshCurrent()
         {
+            if (refreshRoutine != null)
+            {
+                StopCoroutine(refreshRoutine);
+                refreshRoutine = null;
+            }
+            refreshRoutine = StartCoroutine(RefreshCurrentRoutine());
+        }
+
+        private Coroutine refreshRoutine;
+
+        private IEnumerator RefreshCurrentRoutine()
+        {
             EnsureGridLayout();
+            yield return FadeOutCards();
+
             ReleaseAllCards();
 
             List<WardrobeItemDefinition> baseItems = wardrobeManager != null
@@ -858,6 +872,37 @@ namespace DesktopPet.UI
 
             renderedCount = 0;
             RenderNextPage();
+            refreshRoutine = null;
+        }
+
+        private IEnumerator FadeOutCards()
+        {
+            if (activeCards.Count == 0) yield break;
+
+            CanvasGroup[] groups = new CanvasGroup[activeCards.Count];
+            for (int i = 0; i < activeCards.Count; i++)
+            {
+                WardrobeCardView v = activeCards[i];
+                if (v == null) continue;
+                CanvasGroup cg = v.GetComponent<CanvasGroup>();
+                if (cg == null) cg = v.gameObject.AddComponent<CanvasGroup>();
+                cg.alpha = 1f;
+                groups[i] = cg;
+            }
+
+            float t = 0f;
+            float dur = 0.12f;
+            while (t < dur)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / dur);
+                float alpha = 1f - a;
+                for (int i = 0; i < groups.Length; i++)
+                {
+                    if (groups[i] != null) groups[i].alpha = alpha;
+                }
+                yield return null;
+            }
         }
 
         private void BuildVirtualQuery(List<WardrobeItemDefinition> baseItems)
