@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6149b016bc04a4429520f1de12e04a8, type: 3}
+  m_Name: WardrobeCatalog
+  m_EditorClassIdentifier: 
+  items:
+  - {fileID: 11400000, guid: f2d1b2faee7b44040891af9bb5af5b3f, type: 2}
+  - {fileID: 11400000, guid: 8bae09e97e5771d4293efb22f3f98923, type: 2}
+  - {fileID: 11400000, guid: 1e8a04fda6969aa49bdbc37fe1b1edc2, type: 2}
+  - {fileID: 11400000, guid: 71c383049a3984e4abddf9b48953fc32, type: 2}
+  - {fileID: 11400000, guid: 84a11a19628d0bf468884e251b81d157, type: 2}
+  - {fileID: 11400000, guid: 314711951f8fd554486d41e11e6dbf8a, type: 2}
+  - {fileID: 11400000, guid: edb45f27ce0bcb0498e8e3df38dca851, type: 2}
+  - {fileID: 11400000, guid: 346bf6494bf42e948a2728e4e60322b8, type: 2}
+  - {fileID: 11400000, guid: 49ba3bada0eb9054b8e5c4100dfd6fdc, type: 2}
+  - {fileID: 11400000, guid: b826b13512227c143a687dcfc40981b4, type: 2}
+  - {fileID: 11400000, guid: c47f1ee53eb35d940a543e3a6a3db28a, type: 2}
+  - {fileID: 11400000, guid: c4d1c91019ddbda47aa049749a3c9ac9, type: 2}
+  - {fileID: 11400000, guid: f52a0c5a91a5f3f4182b29abecd414ae, type: 2}
+  - {fileID: 11400000, guid: 2402d2fa33c9f4243905c42cf9b0b80c, type: 2}
+  - {fileID: 11400000, guid: f78014a0eeaec5747a91d86fc57ecd87, type: 2}
+  - {fileID: 11400000, guid: 2f4b5a97fec038e42b8960d04f73ddad, type: 2}
+  - {fileID: 11400000, guid: c27cf2d231518a44fa8b4a47bcff8a00, type: 2}

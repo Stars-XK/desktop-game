@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15e808ebafa01f642b5d4028c819b0bb, type: 3}
+  m_Name: LocalVoiceLibrary
+  m_EditorClassIdentifier: 
+  entries:
+  - key: "\u4F60\u597D"
+    clip: {fileID: 8300000, guid: 684ec88838b249e429eefd4a2a262306, type: 3}
+  - key: "\u597D\u7684"
+    clip: {fileID: 8300000, guid: fb2da4bbcc0af7748a82ed29f22dde58, type: 3}
+  - key: "\u518D\u89C1"
+    clip: {fileID: 8300000, guid: f23c68a31dcc3a8499b0b7e0805413ab, type: 3}
+  - key: "\u606D\u559C"
+    clip: {fileID: 8300000, guid: e052c6758ae597b4485c282406533797, type: 3}
+  - key: "\u5F00\u59CB"
+    clip: {fileID: 8300000, guid: cd9d48b7df8f5da469c8667378ac5aa0, type: 3}
+  - key: "\u52A0\u6CB9"
+    clip: {fileID: 8300000, guid: cd9d48b7df8f5da469c8667378ac5aa0, type: 3}
+  - key: "\u4E0D\u5BF9"
+    clip: {fileID: 8300000, guid: 0963b23ee0a76be4dacfd06e3a6dbadf, type: 3}
+  caseInsensitive: 1
