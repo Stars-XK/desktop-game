@@ -72,6 +72,11 @@ namespace DesktopPet.Data
         public PhotoModePresetData photoPresetC = new PhotoModePresetData();
         public List<PhotoModePresetData> photoPresets = new List<PhotoModePresetData>();
         public int selectedPhotoPresetIndex = 0;
+        public List<int> recentPhotoPresetIndices = new List<int>();
+        public bool photoAutoCopyShare = false;
+        public bool photoAutoOpenFolder = false;
+        public float photoToastAutoHideSeconds = 3.0f;
+        public long lastPhotoPraiseUnix = 0;
 
         public List<string> ownedItemIds = new List<string>();
         public List<string> favoriteItemIds = new List<string>();
@@ -195,6 +200,11 @@ namespace DesktopPet.Data
             }
             if (data.selectedPhotoPresetIndex < 0) data.selectedPhotoPresetIndex = 0;
             if (data.selectedPhotoPresetIndex >= data.photoPresets.Count) data.selectedPhotoPresetIndex = Mathf.Max(0, data.photoPresets.Count - 1);
+            if (data.recentPhotoPresetIndices == null) data.recentPhotoPresetIndices = new List<int>();
+            data.recentPhotoPresetIndices.RemoveAll(i => i < 0 || i >= data.photoPresets.Count);
+            if (!data.recentPhotoPresetIndices.Contains(data.selectedPhotoPresetIndex)) data.recentPhotoPresetIndices.Insert(0, data.selectedPhotoPresetIndex);
+            while (data.recentPhotoPresetIndices.Count > 3) data.recentPhotoPresetIndices.RemoveAt(data.recentPhotoPresetIndices.Count - 1);
+            if (data.photoToastAutoHideSeconds <= 0f) data.photoToastAutoHideSeconds = 3.0f;
 
             if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
             if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
