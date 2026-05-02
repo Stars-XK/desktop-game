@@ -8,6 +8,7 @@ namespace DesktopPet.UI
     {
         public Image backplateImage;
         public Image frameHighlight;
+        public WardrobeFrameSheen frameSheen;
         public WardrobeSsrGlow ssrGlow;
         public WardrobeSsrSparkleUI ssrSparkle;
         public WardrobeSsrShine badgeShine;
@@ -33,6 +34,7 @@ namespace DesktopPet.UI
                 c.a = isSsr ? 0.22f : 0.10f;
                 frameHighlight.color = c;
             }
+            if (frameSheen != null) frameSheen.enabled = isSsr;
             if (ssrGlow != null)
             {
                 ssrGlow.SetRarity(rarity);

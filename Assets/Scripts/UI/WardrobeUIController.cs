@@ -1241,6 +1241,22 @@ namespace DesktopPet.UI
             highlightRt.offsetMin = new Vector2(-2f, -2f);
             highlightRt.offsetMax = new Vector2(2f, 2f);
 
+            GameObject sheenGo = new GameObject("FrameSheen");
+            sheenGo.transform.SetParent(root.transform, false);
+            RectTransform sheenRt = sheenGo.AddComponent<RectTransform>();
+            sheenRt.anchorMin = new Vector2(0.5f, 0.5f);
+            sheenRt.anchorMax = new Vector2(0.5f, 0.5f);
+            sheenRt.sizeDelta = new Vector2(80f, 520f);
+            sheenRt.anchoredPosition = new Vector2(-260f, 0f);
+            sheenRt.localRotation = Quaternion.Euler(0f, 0f, 22f);
+            Image sheenImg = sheenGo.AddComponent<Image>();
+            sheenImg.raycastTarget = false;
+            sheenImg.color = new Color(1f, 0.95f, 0.7f, 0f);
+            WardrobeFrameSheen frameSheen = sheenGo.AddComponent<WardrobeFrameSheen>();
+            frameSheen.sheenRect = sheenRt;
+            frameSheen.sheenImage = sheenImg;
+            frameSheen.enabled = false;
+
             GameObject backGo = new GameObject("Backplate");
             backGo.transform.SetParent(root.transform, false);
             Image back = backGo.AddComponent<Image>();
@@ -1448,6 +1464,7 @@ namespace DesktopPet.UI
             WardrobeCardFX fx = root.AddComponent<WardrobeCardFX>();
             fx.backplateImage = back;
             fx.frameHighlight = highlight;
+            fx.frameSheen = frameSheen;
             fx.ssrGlow = glow;
             fx.ssrSparkle = spark;
             fx.badgeShine = ssrBadgeShine;
