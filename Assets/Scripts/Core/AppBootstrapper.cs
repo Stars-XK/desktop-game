@@ -118,6 +118,8 @@ namespace DesktopPet.Core
             if (GetComponent<ShowroomBubbleUI>() == null) gameObject.AddComponent<ShowroomBubbleUI>();
             if (GetComponent<ShowroomLightingRig>() == null) gameObject.AddComponent<ShowroomLightingRig>();
             if (GetComponent<AmbientSparkles>() == null) gameObject.AddComponent<AmbientSparkles>();
+            if (GetComponent<DesktopPet.CameraSys.PhotoModeManager>() == null) gameObject.AddComponent<DesktopPet.CameraSys.PhotoModeManager>();
+            if (GetComponent<PhotoModeUI>() == null) gameObject.AddComponent<PhotoModeUI>();
 
             ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
             if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
