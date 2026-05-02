@@ -32,6 +32,17 @@ namespace DesktopPet.Data
         public string openAIApiKey = "";
         public float volume = 1.0f;
 
+        public string petName = "小优";
+        public string userNickname = "你";
+        public int relationshipLevel = 1;
+        public int relationshipXp = 0;
+        public string personaStyle = "温柔甜系，有点傲娇，爱打扮";
+        public bool enableProactive = true;
+        public float proactiveMinIntervalSeconds = 180f;
+        public string longTermSummary = "";
+        public string factsJson = "{}";
+        public long lastProactiveUnix = 0;
+
         public List<string> ownedItemIds = new List<string>();
         public List<string> favoriteItemIds = new List<string>();
         public List<OutfitPresetData> outfitPresets = new List<OutfitPresetData>();
@@ -110,6 +121,15 @@ namespace DesktopPet.Data
         private static void EnsureDefaults(PetSaveData data)
         {
             if (data == null) return;
+
+            if (string.IsNullOrEmpty(data.petName)) data.petName = "小优";
+            if (string.IsNullOrEmpty(data.userNickname)) data.userNickname = "你";
+            if (data.relationshipLevel <= 0) data.relationshipLevel = 1;
+            if (data.relationshipXp < 0) data.relationshipXp = 0;
+            if (string.IsNullOrEmpty(data.personaStyle)) data.personaStyle = "温柔甜系，有点傲娇，爱打扮";
+            if (data.proactiveMinIntervalSeconds <= 10f) data.proactiveMinIntervalSeconds = 180f;
+            if (data.longTermSummary == null) data.longTermSummary = "";
+            if (string.IsNullOrEmpty(data.factsJson)) data.factsJson = "{}";
 
             if (data.ownedItemIds == null) data.ownedItemIds = new List<string>();
             if (data.favoriteItemIds == null) data.favoriteItemIds = new List<string>();
