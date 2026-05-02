@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using DesktopPet.AI;
 using DesktopPet.Data;
@@ -104,6 +105,7 @@ namespace DesktopPet.Interaction
             if (interaction != null && interaction.DragMoved) yield break;
 
             string stage = combo >= 4 ? "playful_annoyed" : (combo == 3 ? "tsundere" : (combo == 2 ? "cute" : "shy"));
+            UpdateMoodAndMilestones(zone, stage);
 
             string seed =
                 $"（系统提示）用户正在触摸你的{zone}，这是连续第{combo}次。你要像女朋友一样回应：\n" +
@@ -113,6 +115,32 @@ namespace DesktopPet.Interaction
                 "4) 头：更害羞；脸：更撒娇；身体：更小傲娇；playful_annoyed 也要可爱不凶";
 
             TriggerReaction(seed, zone);
+        }
+
+        private static void UpdateMoodAndMilestones(string zone, string stage)
+        {
+            if (SaveManager.Instance == null) return;
+            var d = SaveManager.Instance.CurrentData;
+
+            string mood = stage == "shy" ? "shy" : (stage == "cute" ? "cute" : (stage == "tsundere" ? "tsundere" : "annoyed"));
+            d.currentMood = mood;
+            d.moodExpireUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 300;
+
+            if (d.milestoneMemories == null) d.milestoneMemories = new System.Collections.Generic.List<string>();
+            AddMilestoneOnce(d, zone == "头" ? "你喜欢摸我的头" : (zone == "脸" ? "你喜欢戳我的脸" : "你喜欢摸摸我"));
+            if (stage == "cute") AddMilestoneOnce(d, "你喜欢我撒娇的语气");
+            if (d.milestoneMemories.Count > 32) d.milestoneMemories.RemoveRange(32, d.milestoneMemories.Count - 32);
+
+            SaveManager.Instance.SaveData();
+        }
+
+        private static void AddMilestoneOnce(PetSaveData d, string line)
+        {
+            if (d == null) return;
+            if (string.IsNullOrEmpty(line)) return;
+            if (d.milestoneMemories == null) return;
+            if (d.milestoneMemories.Contains(line)) return;
+            d.milestoneMemories.Insert(0, line);
         }
 
         private void TriggerReaction(string seed, string zone)
