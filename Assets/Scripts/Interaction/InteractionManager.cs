@@ -20,6 +20,10 @@ namespace DesktopPet.Interaction
         public UnityEvent onPettingStarted;
         public UnityEvent onPettingEnded;
 
+        public bool lastHitValid;
+        public Vector3 lastHitPointWorld;
+        public float lastHitNormalizedHeight;
+
         private Vector3 offset;
         private float zCoord;
         private bool isDragging = false;
@@ -64,6 +68,8 @@ namespace DesktopPet.Interaction
         {
             if (!canDrag) return;
 
+            CaptureHitInfo();
+
             zCoord = mainCamera.WorldToScreenPoint(gameObject.transform.position).z;
             offset = gameObject.transform.position - GetMouseAsWorldPoint();
             isDragging = true;
@@ -77,6 +83,24 @@ namespace DesktopPet.Interaction
         {
             isDragging = false;
             onPettingEnded?.Invoke();
+        }
+
+        private void CaptureHitInfo()
+        {
+            lastHitValid = false;
+            if (mainCamera == null) return;
+            Collider col = GetComponent<Collider>();
+            if (col == null) return;
+
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            if (col.Raycast(ray, out RaycastHit hit, 50f))
+            {
+                lastHitValid = true;
+                lastHitPointWorld = hit.point;
+                Bounds b = col.bounds;
+                float y = Mathf.InverseLerp(b.min.y, b.max.y, hit.point.y);
+                lastHitNormalizedHeight = Mathf.Clamp01(y);
+            }
         }
 
         private void OnMouseDrag()

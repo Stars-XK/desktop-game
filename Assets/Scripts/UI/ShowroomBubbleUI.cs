@@ -11,6 +11,7 @@ namespace DesktopPet.UI
         private Text messageText;
         private CanvasGroup cg;
         private float visibleUntil;
+        private Coroutine anim;
 
         private void Start()
         {
@@ -23,7 +24,7 @@ namespace DesktopPet.UI
             if (visibleUntil <= 0f) return;
             if (Time.unscaledTime > visibleUntil)
             {
-                cg.alpha = Mathf.MoveTowards(cg.alpha, 0f, Time.unscaledDeltaTime * 2.6f);
+                cg.alpha = Mathf.MoveTowards(cg.alpha, 0f, Time.unscaledDeltaTime * 2.0f);
             }
         }
 
@@ -41,6 +42,16 @@ namespace DesktopPet.UI
             {
                 cg.alpha = 1f;
                 visibleUntil = Time.unscaledTime + 12f;
+            }
+
+            RectTransform rt = root != null ? root.GetComponent<RectTransform>() : null;
+            if (rt != null)
+            {
+                if (anim != null) StopCoroutine(anim);
+                Vector3 from = Vector3.one * 0.96f;
+                Vector3 to = Vector3.one;
+                rt.localScale = from;
+                anim = StartCoroutine(UIAnim.TweenVector3(from, to, 0.24f, v => rt.localScale = v, UIAnim.EaseOutBack));
             }
         }
 
@@ -67,6 +78,7 @@ namespace DesktopPet.UI
             rt.anchorMax = new Vector2(0.46f, 0.26f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
+            rt.localScale = Vector3.one;
 
             Font font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
@@ -100,4 +112,3 @@ namespace DesktopPet.UI
         }
     }
 }
-

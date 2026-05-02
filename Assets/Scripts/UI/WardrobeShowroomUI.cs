@@ -64,6 +64,7 @@ namespace DesktopPet.UI
             GameObject buttonGo = DefaultControls.CreateButton(resources);
             buttonGo.name = "OpenWardrobeButton";
             buttonGo.transform.SetParent(canvasRoot.transform, false);
+            if (buttonGo.GetComponent<UIButtonFeedback>() == null) buttonGo.AddComponent<UIButtonFeedback>();
             RectTransform btnRt = buttonGo.GetComponent<RectTransform>();
             btnRt.anchorMin = new Vector2(0.04f, 0.72f);
             btnRt.anchorMax = new Vector2(0.20f, 0.82f);
@@ -94,6 +95,7 @@ namespace DesktopPet.UI
             GameObject settingsGo = DefaultControls.CreateButton(resources);
             settingsGo.name = "SettingsButton";
             settingsGo.transform.SetParent(canvasRoot.transform, false);
+            if (settingsGo.GetComponent<UIButtonFeedback>() == null) settingsGo.AddComponent<UIButtonFeedback>();
             RectTransform setRt = settingsGo.GetComponent<RectTransform>();
             setRt.anchorMin = new Vector2(0.04f, 0.60f);
             setRt.anchorMax = new Vector2(0.20f, 0.70f);
@@ -128,4 +130,3 @@ namespace DesktopPet.UI
         }
     }
 }
-

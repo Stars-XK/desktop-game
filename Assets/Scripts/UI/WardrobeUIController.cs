@@ -199,6 +199,7 @@ namespace DesktopPet.UI
             GameObject closeBtnGo = DefaultControls.CreateButton(resources);
             closeBtnGo.name = "CloseDrawerButton";
             closeBtnGo.transform.SetParent(drawerRoot.transform, false);
+            if (closeBtnGo.GetComponent<UIButtonFeedback>() == null) closeBtnGo.AddComponent<UIButtonFeedback>();
             RectTransform closeRt = closeBtnGo.GetComponent<RectTransform>();
             closeRt.anchorMin = new Vector2(0.92f, 0.93f);
             closeRt.anchorMax = new Vector2(0.98f, 0.985f);
@@ -759,20 +760,7 @@ namespace DesktopPet.UI
 
         private IEnumerator AnimateDrawer(float fromX, float toX)
         {
-            float t = 0f;
-            float dur = 0.22f;
-            Vector2 p = drawerRootRt.anchoredPosition;
-            while (t < dur)
-            {
-                t += Time.unscaledDeltaTime;
-                float a = Mathf.Clamp01(t / dur);
-                float s = 1f - Mathf.Pow(1f - a, 3f);
-                p.x = Mathf.Lerp(fromX, toX, s);
-                drawerRootRt.anchoredPosition = p;
-                yield return null;
-            }
-            p.x = toX;
-            drawerRootRt.anchoredPosition = p;
+            yield return UIAnim.TweenAnchoredPosX(drawerRootRt, fromX, toX, 0.26f, UIAnim.EaseOutCubic);
             drawerRoutine = null;
         }
 

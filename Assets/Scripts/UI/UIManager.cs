@@ -213,6 +213,7 @@ namespace DesktopPet.UI
                 GameObject saveGo = DefaultControls.CreateButton(resources);
                 saveGo.name = "SaveSettingsButton";
                 saveGo.transform.SetParent(settingsPanel.transform, false);
+                if (saveGo.GetComponent<UIButtonFeedback>() == null) saveGo.AddComponent<UIButtonFeedback>();
                 RectTransform rt = saveGo.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.10f, 0.06f);
                 rt.anchorMax = new Vector2(0.48f, 0.18f);
@@ -237,6 +238,7 @@ namespace DesktopPet.UI
                 GameObject closeGo = DefaultControls.CreateButton(resources);
                 closeGo.name = "CloseSettingsButton";
                 closeGo.transform.SetParent(settingsPanel.transform, false);
+                if (closeGo.GetComponent<UIButtonFeedback>() == null) closeGo.AddComponent<UIButtonFeedback>();
                 RectTransform rt = closeGo.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.52f, 0.06f);
                 rt.anchorMax = new Vector2(0.90f, 0.18f);

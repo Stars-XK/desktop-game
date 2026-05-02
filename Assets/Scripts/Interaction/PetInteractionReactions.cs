@@ -38,7 +38,20 @@ namespace DesktopPet.Interaction
         {
             if (Time.unscaledTime < nextAllowedAt) return;
             nextAllowedAt = Time.unscaledTime + minSecondsBetweenReactions;
-            TriggerReaction("（系统提示）用户正在摸你/拖你，你要害羞一点、撒娇一点，用很短的一句话回应，开头必须是 [emotion]。");
+            string zone = "身体";
+            if (interaction != null && interaction.lastHitValid)
+            {
+                float h = interaction.lastHitNormalizedHeight;
+                if (h > 0.78f) zone = "头";
+                else if (h > 0.56f) zone = "脸";
+            }
+
+            string seed =
+                $"（系统提示）用户正在触摸你的{zone}。你要像女朋友一样给出很短很口语的回应：\n" +
+                "1) 开头必须是 [emotion]\n" +
+                "2) 一句话，带语气词\n" +
+                "3) 如果是头：更害羞；如果是脸：更撒娇；如果是身体：更小傲娇";
+            TriggerReaction(seed, zone);
         }
 
         private void OnPettingEnded()
@@ -60,7 +73,7 @@ namespace DesktopPet.Interaction
 
             if (leveled)
             {
-                TriggerReaction($"（系统提示）你们的亲密度升级到 Lv{d.relationshipLevel}。你要很开心、带点小傲娇，简短庆祝一句。开头必须是 [emotion]。");
+                TriggerReaction($"（系统提示）你们的亲密度升级到 Lv{d.relationshipLevel}。你要很开心、带点小傲娇，简短庆祝一句。开头必须是 [emotion]。", "升级");
             }
         }
 
@@ -70,12 +83,13 @@ namespace DesktopPet.Interaction
             return 40 + lv * 20;
         }
 
-        private void TriggerReaction(string seed)
+        private void TriggerReaction(string seed, string zone)
         {
             if (aiManager == null) return;
-            uiManager?.AppendToChat("<color=#A9A9A9><i>小优有点害羞...</i></color>");
+            if (zone == "头") uiManager?.AppendToChat("<color=#A9A9A9><i>小优：别、别摸头呀…</i></color>");
+            else if (zone == "脸") uiManager?.AppendToChat("<color=#A9A9A9><i>小优：你干嘛戳我脸…</i></color>");
+            else uiManager?.AppendToChat("<color=#A9A9A9><i>小优：哼…</i></color>");
             aiManager.ProcessUserInput(seed);
         }
     }
 }
-

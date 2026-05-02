@@ -58,6 +58,7 @@ namespace DesktopPet.AI
             GameObject micGo = DefaultControls.CreateButton(resources);
             micGo.name = "MicButton";
             micGo.transform.SetParent(micUiRoot.transform, false);
+            if (micGo.GetComponent<UIButtonFeedback>() == null) micGo.AddComponent<UIButtonFeedback>();
 
             RectTransform rt = micGo.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0.04f, 0.48f);

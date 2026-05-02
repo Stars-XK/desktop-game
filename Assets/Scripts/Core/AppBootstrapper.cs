@@ -116,6 +116,8 @@ namespace DesktopPet.Core
             showroom.uiManager = uiManager;
 
             if (GetComponent<ShowroomBubbleUI>() == null) gameObject.AddComponent<ShowroomBubbleUI>();
+            if (GetComponent<ShowroomLightingRig>() == null) gameObject.AddComponent<ShowroomLightingRig>();
+            if (GetComponent<AmbientSparkles>() == null) gameObject.AddComponent<AmbientSparkles>();
 
             ShowroomCameraController camCtl = GetComponent<ShowroomCameraController>();
             if (camCtl == null) camCtl = gameObject.AddComponent<ShowroomCameraController>();
@@ -162,6 +164,12 @@ namespace DesktopPet.Core
             Transform t = dressUpManager.rootBone != null ? dressUpManager.rootBone : null;
             if (t != null && t.parent != null) t = t.parent;
             camCtl.target = t;
+
+            ShowroomLightingRig lights = GetComponent<ShowroomLightingRig>();
+            if (lights != null) lights.target = t;
+
+            AmbientSparkles sparkles = GetComponent<AmbientSparkles>();
+            if (sparkles != null) sparkles.target = t;
         }
 
         private void EnsureCharacterInteraction()

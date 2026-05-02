@@ -110,38 +110,50 @@ namespace DesktopPet.AI
 
             string jsonPayload = JsonUtility.ToJson(reqData);
             
-            using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
+            for (int attempt = 0; attempt < 2; attempt++)
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
-                request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Content-Type", "application/json");
-                request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
-
-                yield return request.SendWebRequest();
-
-                if (request.result != UnityWebRequest.Result.Success)
+                using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
                 {
-                    onError?.Invoke(request.error + "\n" + request.downloadHandler.text);
-                    yield break;
-                }
+                    byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonPayload);
+                    request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                    request.downloadHandler = new DownloadHandlerBuffer();
+                    request.timeout = 20;
+                    request.SetRequestHeader("Content-Type", "application/json");
+                    request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
 
-                string jsonResponse = request.downloadHandler.text;
-                var resData = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
-                
-                if (resData != null && resData.choices != null && resData.choices.Length > 0)
-                {
-                    string fullText = resData.choices[0].message.content;
+                    yield return request.SendWebRequest();
+
+                    if (request.result != UnityWebRequest.Result.Success)
+                    {
+                        long code = request.responseCode;
+                        bool retryable = code == 429 || code == 500 || code == 502 || code == 503 || code == 504 || code == 0;
+                        if (retryable && attempt == 0)
+                        {
+                            yield return new WaitForSecondsRealtime(1.0f);
+                            continue;
+                        }
+                        onError?.Invoke(request.error + "\n" + request.downloadHandler.text);
+                        yield break;
+                    }
+
+                    string jsonResponse = request.downloadHandler.text;
+                    var resData = JsonUtility.FromJson<OpenAIResponse>(jsonResponse);
                     
-                    // Add AI response to history so it remembers what it said
-                    chatHistory.Add(new OpenAIMessage { role = "assistant", content = fullText });
+                    if (resData != null && resData.choices != null && resData.choices.Length > 0)
+                    {
+                        string fullText = resData.choices[0].message.content;
+                        
+                        chatHistory.Add(new OpenAIMessage { role = "assistant", content = fullText });
 
-                    ExtractEmotion(fullText, out string emotion, out string cleanText);
-                    onSuccess?.Invoke(cleanText, emotion);
-                }
-                else
-                {
-                    onError?.Invoke("Failed to parse LLM response.");
+                        ExtractEmotion(fullText, out string emotion, out string cleanText);
+                        onSuccess?.Invoke(cleanText, emotion);
+                        yield break;
+                    }
+                    else
+                    {
+                        onError?.Invoke("Failed to parse LLM response.");
+                        yield break;
+                    }
                 }
             }
         }
