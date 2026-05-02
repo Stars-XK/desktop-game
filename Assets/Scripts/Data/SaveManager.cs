@@ -45,6 +45,7 @@ namespace DesktopPet.Data
         public string longTermSummary = "";
         public string factsJson = "{}";
         public long lastProactiveUnix = 0;
+        public long lastWardrobeActionUnix = 0;
         public string currentMood = "idle";
         public long moodExpireUnix = 0;
         public List<string> milestoneMemories = new List<string>();
