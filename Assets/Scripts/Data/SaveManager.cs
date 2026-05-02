@@ -32,6 +32,9 @@ namespace DesktopPet.Data
         public string openAIApiKey = "";
         public float volume = 1.0f;
 
+        public string llmBaseUrl = "https://api.openai.com";
+        public string llmModelName = "gpt-3.5-turbo";
+
         public string petName = "小优";
         public string userNickname = "你";
         public int relationshipLevel = 1;
@@ -121,6 +124,9 @@ namespace DesktopPet.Data
         private static void EnsureDefaults(PetSaveData data)
         {
             if (data == null) return;
+
+            if (string.IsNullOrEmpty(data.llmBaseUrl)) data.llmBaseUrl = "https://api.openai.com";
+            if (string.IsNullOrEmpty(data.llmModelName)) data.llmModelName = "gpt-3.5-turbo";
 
             if (string.IsNullOrEmpty(data.petName)) data.petName = "小优";
             if (string.IsNullOrEmpty(data.userNickname)) data.userNickname = "你";
