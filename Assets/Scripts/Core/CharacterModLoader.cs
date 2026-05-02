@@ -16,7 +16,7 @@ namespace DesktopPet.Core
         public Camera mainCamera;
         public LayerMask clickableLayer;
         public GameObject fallbackCharacterPrefab;
-        public bool preferFallbackCharacterInEditor = true;
+        public bool preferFallbackCharacterInEditor = false;
 
         private AssetBundleLoader bundleLoader;
         private GameObject currentCharacterInstance;

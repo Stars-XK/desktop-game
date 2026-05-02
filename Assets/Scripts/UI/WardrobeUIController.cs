@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DesktopPet.DressUp;
 using DesktopPet.Core;
 using DesktopPet.Wardrobe;
+using DesktopPet.Data;
 
 namespace DesktopPet.UI
 {
@@ -62,6 +64,9 @@ namespace DesktopPet.UI
         private GameObject loadingOverlayRoot;
         private CanvasGroup loadingOverlayCg;
         private Text loadingOverlayText;
+        private Dropdown outfitDropdown;
+        private Button outfitRefreshButton;
+        private bool outfitUpdating;
         private float drawerWidth = 900f;
         private bool drawerOpen;
         private Coroutine drawerRoutine;
@@ -155,10 +160,21 @@ namespace DesktopPet.UI
                 reloadCharacterButton.onClick.AddListener(() =>
                 {
                     // For now, reload the current character from save (this could be expanded to a list)
-                    var bundleName = DesktopPet.Data.SaveManager.Instance.CurrentData.selectedCharacterBundleName;
+                    var bundleName = SaveManager.Instance.CurrentData.selectedCharacterBundleName;
                     characterLoader.SwitchCharacter(bundleName);
                 });
             }
+
+            if (outfitDropdown != null)
+            {
+                outfitDropdown.onValueChanged.AddListener(OnOutfitChanged);
+            }
+            if (outfitRefreshButton != null)
+            {
+                outfitRefreshButton.onClick.AddListener(RefreshOutfitList);
+            }
+
+            RefreshOutfitList();
         }
 
         private void EnsureBasicUI()
@@ -486,6 +502,56 @@ namespace DesktopPet.UI
 
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
+            GameObject outfitTitleGo = new GameObject("OutfitTitle");
+            outfitTitleGo.transform.SetParent(filterPanelRoot.transform, false);
+            Text outfitTitle = outfitTitleGo.AddComponent<Text>();
+            outfitTitle.font = font;
+            outfitTitle.text = "套装";
+            outfitTitle.fontSize = 18;
+            outfitTitle.alignment = TextAnchor.MiddleLeft;
+            outfitTitle.color = WardrobeThemeFactory.TextMain;
+            RectTransform outfitTitleRt = outfitTitleGo.GetComponent<RectTransform>();
+            outfitTitleRt.sizeDelta = new Vector2(0, 28);
+
+            GameObject outfitRow = new GameObject("OutfitRow");
+            outfitRow.transform.SetParent(filterPanelRoot.transform, false);
+            HorizontalLayoutGroup hlg = outfitRow.AddComponent<HorizontalLayoutGroup>();
+            hlg.childAlignment = TextAnchor.MiddleLeft;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = false;
+            hlg.spacing = 8f;
+            RectTransform rowRt = outfitRow.GetComponent<RectTransform>();
+            rowRt.sizeDelta = new Vector2(0, 44);
+
+            GameObject outfitGo = DefaultControls.CreateDropdown(resources);
+            outfitGo.name = "OutfitDropdown";
+            outfitGo.transform.SetParent(outfitRow.transform, false);
+            outfitDropdown = outfitGo.GetComponent<Dropdown>();
+            if (outfitDropdown != null)
+            {
+                outfitDropdown.options = new List<Dropdown.OptionData> { new Dropdown.OptionData("默认") };
+                Text caption = outfitGo.transform.Find("Label") != null ? outfitGo.transform.Find("Label").GetComponent<Text>() : null;
+                if (caption != null) caption.font = font;
+            }
+
+            GameObject refGo = DefaultControls.CreateButton(resources);
+            refGo.name = "OutfitRefresh";
+            refGo.transform.SetParent(outfitRow.transform, false);
+            if (refGo.GetComponent<UIButtonFeedback>() == null) refGo.AddComponent<UIButtonFeedback>();
+            Image refBg = refGo.GetComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(refBg);
+            Text refText = refGo.GetComponentInChildren<Text>();
+            if (refText != null)
+            {
+                refText.font = font;
+                refText.text = "刷新";
+                refText.fontSize = 16;
+                refText.color = WardrobeThemeFactory.TextMain;
+            }
+            outfitRefreshButton = refGo.GetComponent<Button>();
+
             GameObject searchGo = DefaultControls.CreateInputField(resources);
             searchGo.name = "SearchInput";
             searchGo.transform.SetParent(filterPanelRoot.transform, false);
@@ -578,6 +644,82 @@ namespace DesktopPet.UI
             chipsRt.sizeDelta = new Vector2(0, 360);
 
             filterPanelRoot.SetActive(true);
+        }
+
+        private void RefreshOutfitList()
+        {
+            if (outfitDropdown == null) return;
+
+            outfitUpdating = true;
+            string modsDir = GetModsDir();
+            List<string> bundles = new List<string>();
+            if (Directory.Exists(modsDir))
+            {
+                string[] files = Directory.GetFiles(modsDir, "character_*", SearchOption.TopDirectoryOnly);
+                for (int i = 0; i < files.Length; i++)
+                {
+                    string name = Path.GetFileName(files[i]);
+                    if (string.IsNullOrEmpty(name)) continue;
+                    if (name.EndsWith(".manifest", StringComparison.OrdinalIgnoreCase)) continue;
+                    bundles.Add(name);
+                }
+            }
+            bundles.Sort(StringComparer.OrdinalIgnoreCase);
+
+            outfitDropdown.options = new List<Dropdown.OptionData>();
+            if (bundles.Count == 0)
+            {
+                outfitDropdown.options.Add(new Dropdown.OptionData("默认"));
+                outfitDropdown.value = 0;
+                outfitDropdown.RefreshShownValue();
+                outfitUpdating = false;
+                return;
+            }
+
+            for (int i = 0; i < bundles.Count; i++)
+            {
+                outfitDropdown.options.Add(new Dropdown.OptionData(bundles[i]));
+            }
+
+            string current = SaveManager.Instance != null && SaveManager.Instance.CurrentData != null ? SaveManager.Instance.CurrentData.selectedCharacterBundleName : "";
+            int idx = 0;
+            if (!string.IsNullOrEmpty(current))
+            {
+                for (int i = 0; i < bundles.Count; i++)
+                {
+                    if (bundles[i] == current)
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+            }
+            outfitDropdown.value = idx;
+            outfitDropdown.RefreshShownValue();
+            outfitUpdating = false;
+        }
+
+        private void OnOutfitChanged(int index)
+        {
+            if (outfitDropdown == null) return;
+            if (outfitUpdating) return;
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+
+            string name = outfitDropdown.options != null && index >= 0 && index < outfitDropdown.options.Count ? outfitDropdown.options[index].text : "";
+            if (string.IsNullOrEmpty(name) || name == "默认") return;
+
+            if (SaveManager.Instance.CurrentData.selectedCharacterBundleName == name) return;
+            SaveManager.Instance.CurrentData.selectedCharacterBundleName = name;
+            SaveManager.Instance.SaveData();
+
+            if (characterLoader != null) characterLoader.SwitchCharacter(name);
+        }
+
+        private static string GetModsDir()
+        {
+            AssetBundleLoader loader = FindObjectOfType<AssetBundleLoader>();
+            if (loader != null) return loader.GetModsDirectory();
+            return Path.Combine(Application.dataPath, "..", "Mods");
         }
 
         private void EnsurePresetBar(GameObject canvasGo, DefaultControls.Resources resources)
