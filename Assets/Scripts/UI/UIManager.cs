@@ -198,14 +198,14 @@ namespace DesktopPet.UI
             {
                 CreateLabeledInput(settingsPanel.transform, "Base URL", 0.52f, out baseUrlInputField, font, resources);
                 baseUrlInputField.contentType = InputField.ContentType.Standard;
-                baseUrlInputField.text = "https://api.openai.com";
+                baseUrlInputField.text = "https://api.deepseek.com";
             }
 
             if (modelInputField == null)
             {
                 CreateLabeledInput(settingsPanel.transform, "Model", 0.32f, out modelInputField, font, resources);
                 modelInputField.contentType = InputField.ContentType.Standard;
-                modelInputField.text = "gpt-3.5-turbo";
+                modelInputField.text = "deepseek-chat";
             }
 
             if (saveSettingsButton == null)

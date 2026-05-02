@@ -50,8 +50,8 @@ namespace DesktopPet.Data
         public string openAIApiKey = "";
         public float volume = 1.0f;
 
-        public string llmBaseUrl = "https://api.openai.com";
-        public string llmModelName = "gpt-3.5-turbo";
+        public string llmBaseUrl = "https://api.deepseek.com";
+        public string llmModelName = "deepseek-chat";
 
         public string petName = "小优";
         public string userNickname = "你";
