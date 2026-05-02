@@ -60,6 +60,11 @@ namespace DesktopPet.AI
                     
                     if (ttsProvider != null)
                     {
+                        if (ttsProviderComponent is AzureTTSProvider azure)
+                        {
+                            azure.SetEmotion(emotion);
+                        }
+
                         ttsProvider.SynthesizeAudioAsync(responseText, 
                             onSuccess: clip => 
                             {

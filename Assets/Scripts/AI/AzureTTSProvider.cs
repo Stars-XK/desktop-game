@@ -16,6 +16,12 @@ namespace DesktopPet.AI
         [Header("语音设置 (Voice Settings)")]
         public string voiceName = "zh-CN-XiaoxiaoNeural"; // High quality female voice
         public string outputFormat = "riff-24khz-16bit-mono-pcm";
+        private string currentEmotion = "neutral";
+
+        public void SetEmotion(string emotion)
+        {
+            currentEmotion = string.IsNullOrEmpty(emotion) ? "neutral" : emotion.ToLower();
+        }
 
         public void SynthesizeAudioAsync(string text, Action<AudioClip> onSuccess, Action<string> onError)
         {
@@ -31,11 +37,13 @@ namespace DesktopPet.AI
         {
             string url = $"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1";
 
+            GetProsody(currentEmotion, out string rate, out string pitch, out string volume);
+
             // Construct SSML payload
             string ssml = $@"
 <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='zh-CN'>
     <voice name='{voiceName}'>
-        {text}
+        <prosody rate='{rate}' pitch='{pitch}' volume='{volume}'>{text}</prosody>
     </voice>
 </speak>";
 
@@ -70,6 +78,34 @@ namespace DesktopPet.AI
                 {
                     onError?.Invoke("Failed to parse downloaded audio clip.");
                 }
+            }
+        }
+
+        private static void GetProsody(string emotion, out string rate, out string pitch, out string volume)
+        {
+            rate = "0%";
+            pitch = "0%";
+            volume = "0dB";
+
+            switch (emotion)
+            {
+                case "happy":
+                    rate = "+10%";
+                    pitch = "+8%";
+                    break;
+                case "shy":
+                    rate = "-8%";
+                    pitch = "+4%";
+                    volume = "-2dB";
+                    break;
+                case "angry":
+                    rate = "+6%";
+                    pitch = "-6%";
+                    break;
+                case "sad":
+                    rate = "-12%";
+                    pitch = "-8%";
+                    break;
             }
         }
     }
