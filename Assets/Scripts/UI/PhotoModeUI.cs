@@ -23,12 +23,15 @@ namespace DesktopPet.UI
         private Button closeButton;
         private Button saveButton;
         private Button resetButton;
-        private Button presetSaveA;
-        private Button presetApplyA;
-        private Button presetSaveB;
-        private Button presetApplyB;
-        private Button presetSaveC;
-        private Button presetApplyC;
+        private Dropdown presetDropdown;
+        private Button presetNewButton;
+        private Button presetOverwriteButton;
+        private Button presetDeleteButton;
+        private Button presetRenameButton;
+        private GameObject renameRoot;
+        private InputField renameInput;
+        private Button renameOkButton;
+        private Button renameCancelButton;
         private Button toastOpenButton;
         private Button toastCopyButton;
         private Button toastShareButton;
@@ -185,12 +188,11 @@ namespace DesktopPet.UI
             resetButton = resetGo.GetComponent<Button>();
             if (resetGo.GetComponent<UIButtonFeedback>() == null) resetGo.AddComponent<UIButtonFeedback>();
 
-            presetSaveA = CreatePresetButton(panel.transform, resources, font, "存A", new Vector2(0.06f, 0.28f), new Vector2(0.16f, 0.34f));
-            presetApplyA = CreatePresetButton(panel.transform, resources, font, "用A", new Vector2(0.18f, 0.28f), new Vector2(0.28f, 0.34f));
-            presetSaveB = CreatePresetButton(panel.transform, resources, font, "存B", new Vector2(0.30f, 0.28f), new Vector2(0.40f, 0.34f));
-            presetApplyB = CreatePresetButton(panel.transform, resources, font, "用B", new Vector2(0.42f, 0.28f), new Vector2(0.52f, 0.34f));
-            presetSaveC = CreatePresetButton(panel.transform, resources, font, "存C", new Vector2(0.54f, 0.28f), new Vector2(0.64f, 0.34f));
-            presetApplyC = CreatePresetButton(panel.transform, resources, font, "用C", new Vector2(0.66f, 0.28f), new Vector2(0.76f, 0.34f));
+            presetDropdown = CreateDropdown(panel.transform, "预设", 0.28f, 0.06f, 0.22f, 0.24f, 0.60f, resources, font, new[] { "默认" });
+            presetNewButton = CreatePresetButton(panel.transform, resources, font, "新建", new Vector2(0.62f, 0.28f), new Vector2(0.72f, 0.34f));
+            presetOverwriteButton = CreatePresetButton(panel.transform, resources, font, "覆盖", new Vector2(0.74f, 0.28f), new Vector2(0.84f, 0.34f));
+            presetDeleteButton = CreatePresetButton(panel.transform, resources, font, "删除", new Vector2(0.86f, 0.28f), new Vector2(0.96f, 0.34f));
+            presetRenameButton = CreatePresetButton(panel.transform, resources, font, "改名", new Vector2(0.62f, 0.20f), new Vector2(0.72f, 0.26f));
 
             GameObject saveGo = DefaultControls.CreateButton(resources);
             saveGo.name = "SaveButton";
@@ -250,15 +252,15 @@ namespace DesktopPet.UI
             if (saturationSlider != null) saturationSlider.onValueChanged.AddListener(OnSaturationChanged);
             if (contrastSlider != null) contrastSlider.onValueChanged.AddListener(OnContrastChanged);
             if (saveButton != null) saveButton.onClick.AddListener(OnSave);
-            if (presetSaveA != null) presetSaveA.onClick.AddListener(() => SavePreset(0));
-            if (presetApplyA != null) presetApplyA.onClick.AddListener(() => ApplyPreset(0));
-            if (presetSaveB != null) presetSaveB.onClick.AddListener(() => SavePreset(1));
-            if (presetApplyB != null) presetApplyB.onClick.AddListener(() => ApplyPreset(1));
-            if (presetSaveC != null) presetSaveC.onClick.AddListener(() => SavePreset(2));
-            if (presetApplyC != null) presetApplyC.onClick.AddListener(() => ApplyPreset(2));
+            if (presetDropdown != null) presetDropdown.onValueChanged.AddListener(OnPresetSelected);
+            if (presetNewButton != null) presetNewButton.onClick.AddListener(SaveAsNewPreset);
+            if (presetOverwriteButton != null) presetOverwriteButton.onClick.AddListener(OverwritePreset);
+            if (presetDeleteButton != null) presetDeleteButton.onClick.AddListener(DeletePreset);
+            if (presetRenameButton != null) presetRenameButton.onClick.AddListener(OpenRenameDialog);
 
             EnsureGuides();
             EnsureToast(font, resources);
+            EnsureRenameDialog(font, resources);
         }
 
         private static Dropdown CreateDropdown(Transform parent, string label, float y, float labelXMin, float labelXMax, float dropXMin, float dropXMax, DefaultControls.Resources resources, Font font, string[] options)
@@ -541,6 +543,8 @@ namespace DesktopPet.UI
             EnsurePostFx();
             if (camCtl != null) camCtl.SetPhotoModeActive(true);
             RefreshPoseOptions();
+            RefreshPresetOptionsFromSave();
+            ApplySavedSelectedPreset();
             if (filterDropdown != null) OnFilterChanged(filterDropdown.value);
             if (framingDropdown != null) OnFramingChanged(framingDropdown.value);
             if (lensDropdown != null) OnLensChanged(lensDropdown.value);
@@ -553,6 +557,7 @@ namespace DesktopPet.UI
             if (panel != null) panel.SetActive(false);
             if (camCtl != null) camCtl.SetPhotoModeActive(false);
             if (postFx != null) postFx.enabled = false;
+            if (renameRoot != null) renameRoot.SetActive(false);
         }
 
         private void EnsurePostFx()
@@ -892,21 +897,74 @@ namespace DesktopPet.UI
             toastPreview.gameObject.SetActive(true);
         }
 
-        private PhotoModePresetData GetPresetSlot(int slot)
+        private List<PhotoModePresetData> GetPresetList()
         {
             if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return null;
             var d = SaveManager.Instance.CurrentData;
-            if (slot == 0) return d.photoPresetA;
-            if (slot == 1) return d.photoPresetB;
-            return d.photoPresetC;
+            if (d.photoPresets == null) d.photoPresets = new List<PhotoModePresetData>();
+            if (d.photoPresets.Count == 0) d.photoPresets.Add(new PhotoModePresetData { hasValue = true, name = "默认" });
+            return d.photoPresets;
         }
 
-        private void SavePreset(int slot)
+        private void RefreshPresetOptionsFromSave()
         {
+            if (presetDropdown == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null) return;
+
+            updatingUi = true;
+            presetDropdown.options = new List<Dropdown.OptionData>();
+            for (int i = 0; i < list.Count; i++)
+            {
+                PhotoModePresetData p = list[i];
+                string name = p != null ? p.name : "";
+                if (string.IsNullOrEmpty(name)) name = "预设 " + (i + 1);
+                presetDropdown.options.Add(new Dropdown.OptionData(name));
+            }
+
+            int idx = 0;
+            if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null)
+            {
+                idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, presetDropdown.options.Count - 1);
+                SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = idx;
+            }
+            presetDropdown.value = idx;
+            presetDropdown.RefreshShownValue();
+            updatingUi = false;
+        }
+
+        private void ApplySavedSelectedPreset()
+        {
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null || list.Count == 0) return;
+            int idx = 0;
+            if (SaveManager.Instance != null && SaveManager.Instance.CurrentData != null) idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, list.Count - 1);
+            ApplyPresetData(list[idx]);
+        }
+
+        private void OnPresetSelected(int value)
+        {
+            if (updatingUi) return;
             if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
-            var d = SaveManager.Instance.CurrentData;
+            SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = value;
+            SaveManager.Instance.SaveData();
+            ApplySavedSelectedPreset();
+            lastToastShare = BuildShareText();
+        }
+
+        private string BuildPresetName()
+        {
+            string filter = filterDropdown != null && filterDropdown.options.Count > 0 ? filterDropdown.options[filterDropdown.value].text : "原片";
+            string framing = framingDropdown != null && framingDropdown.options.Count > 0 ? framingDropdown.options[framingDropdown.value].text : "全身";
+            string lens = lensDropdown != null && lensDropdown.options.Count > 0 ? lensDropdown.options[lensDropdown.value].text : "50";
+            return $"{filter}·{framing}·{lens}";
+        }
+
+        private PhotoModePresetData CaptureCurrentPreset(string name)
+        {
             PhotoModePresetData p = new PhotoModePresetData();
             p.hasValue = true;
+            p.name = name ?? "";
             p.bg = bgDropdown != null ? bgDropdown.value : 0;
             p.light = lightDropdown != null ? lightDropdown.value : 0;
             p.framing = framingDropdown != null ? framingDropdown.value : 0;
@@ -922,31 +980,12 @@ namespace DesktopPet.UI
                 p.saturation = postFx.saturation;
                 p.contrast = postFx.contrast;
             }
-
-            if (slot == 0) d.photoPresetA = p;
-            else if (slot == 1) d.photoPresetB = p;
-            else d.photoPresetC = p;
-
-            SaveManager.Instance.SaveData();
-
-            lastToastPath = "";
-            lastToastShare = "";
-            if (toastRoot != null) toastRoot.SetActive(true);
-            if (toastText != null) toastText.text = $"已保存预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))}";
-            SetToastPreview(null);
+            return p;
         }
 
-        private void ApplyPreset(int slot)
+        private void ApplyPresetData(PhotoModePresetData p)
         {
-            PhotoModePresetData p = GetPresetSlot(slot);
-            if (p == null || !p.hasValue)
-            {
-                if (toastRoot != null) toastRoot.SetActive(true);
-                if (toastText != null) toastText.text = $"预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))} 为空";
-                SetToastPreview(null);
-                return;
-            }
-
+            if (p == null) return;
             EnsureDeps();
             EnsurePostFx();
 
@@ -990,10 +1029,184 @@ namespace DesktopPet.UI
                 poseDropdown.RefreshShownValue();
                 OnPoseChanged(idx);
             }
+        }
+
+        private void SaveAsNewPreset()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null) return;
+            string name = BuildPresetName();
+            list.Add(CaptureCurrentPreset(name));
+            SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = list.Count - 1;
+            SaveManager.Instance.SaveData();
+            RefreshPresetOptionsFromSave();
 
             if (toastRoot != null) toastRoot.SetActive(true);
-            if (toastText != null) toastText.text = $"已应用预设 {(slot == 0 ? "A" : (slot == 1 ? "B" : "C"))}";
+            if (toastText != null) toastText.text = $"已新增预设：{name}";
             SetToastPreview(null);
+        }
+
+        private void OverwritePreset()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null || list.Count == 0) return;
+            int idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, list.Count - 1);
+            string name = list[idx] != null ? list[idx].name : "";
+            if (string.IsNullOrEmpty(name)) name = "预设 " + (idx + 1);
+            PhotoModePresetData p = CaptureCurrentPreset(name);
+            p.name = name;
+            list[idx] = p;
+            SaveManager.Instance.SaveData();
+            RefreshPresetOptionsFromSave();
+
+            if (toastRoot != null) toastRoot.SetActive(true);
+            if (toastText != null) toastText.text = $"已覆盖预设：{name}";
+            SetToastPreview(null);
+        }
+
+        private void DeletePreset()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null) return;
+            if (list.Count <= 1)
+            {
+                if (toastRoot != null) toastRoot.SetActive(true);
+                if (toastText != null) toastText.text = "至少保留一个预设";
+                SetToastPreview(null);
+                return;
+            }
+            int idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, list.Count - 1);
+            string name = list[idx] != null ? list[idx].name : "";
+            list.RemoveAt(idx);
+            SaveManager.Instance.CurrentData.selectedPhotoPresetIndex = Mathf.Clamp(idx, 0, list.Count - 1);
+            SaveManager.Instance.SaveData();
+            RefreshPresetOptionsFromSave();
+            ApplySavedSelectedPreset();
+
+            if (toastRoot != null) toastRoot.SetActive(true);
+            if (toastText != null) toastText.text = $"已删除预设：{name}";
+            SetToastPreview(null);
+        }
+
+        private void EnsureRenameDialog(Font font, DefaultControls.Resources resources)
+        {
+            if (renameRoot != null) return;
+            if (root == null) return;
+
+            renameRoot = new GameObject("RenameDialog");
+            renameRoot.transform.SetParent(root.transform, false);
+            Image bg = renameRoot.AddComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
+            RectTransform rt = renameRoot.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.30f, 0.36f);
+            rt.anchorMax = new Vector2(0.70f, 0.56f);
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+
+            GameObject titleGo = new GameObject("Title");
+            titleGo.transform.SetParent(renameRoot.transform, false);
+            Text title = titleGo.AddComponent<Text>();
+            title.font = font;
+            title.text = "重命名预设";
+            title.fontSize = 18;
+            title.alignment = TextAnchor.UpperCenter;
+            title.color = WardrobeThemeFactory.TextMain;
+            RectTransform trt = titleGo.GetComponent<RectTransform>();
+            trt.anchorMin = new Vector2(0.06f, 0.68f);
+            trt.anchorMax = new Vector2(0.94f, 0.96f);
+            trt.offsetMin = Vector2.zero;
+            trt.offsetMax = Vector2.zero;
+
+            GameObject inputGo = DefaultControls.CreateInputField(resources);
+            inputGo.name = "NameInput";
+            inputGo.transform.SetParent(renameRoot.transform, false);
+            RectTransform irt = inputGo.GetComponent<RectTransform>();
+            irt.anchorMin = new Vector2(0.06f, 0.34f);
+            irt.anchorMax = new Vector2(0.94f, 0.64f);
+            irt.offsetMin = Vector2.zero;
+            irt.offsetMax = Vector2.zero;
+            Image ibg = inputGo.GetComponent<Image>();
+            if (ibg != null) WardrobeThemeFactory.ApplyGlassPanel(ibg);
+
+            renameInput = inputGo.GetComponent<InputField>();
+            Text it = inputGo.transform.Find("Text")?.GetComponent<Text>();
+            if (it != null)
+            {
+                it.font = font;
+                it.fontSize = 18;
+                it.color = WardrobeThemeFactory.TextMain;
+            }
+            Text ph = inputGo.transform.Find("Placeholder")?.GetComponent<Text>();
+            if (ph != null)
+            {
+                ph.font = font;
+                ph.fontSize = 18;
+                Color c = WardrobeThemeFactory.TextMain;
+                c.a = 0.55f;
+                ph.color = c;
+                ph.text = "输入名称…";
+            }
+
+            renameOkButton = CreateRenameButton(resources, font, "确定", new Vector2(0.06f, 0.06f), new Vector2(0.46f, 0.26f));
+            renameCancelButton = CreateRenameButton(resources, font, "取消", new Vector2(0.54f, 0.06f), new Vector2(0.94f, 0.26f));
+            if (renameOkButton != null) renameOkButton.onClick.AddListener(ConfirmRename);
+            if (renameCancelButton != null) renameCancelButton.onClick.AddListener(() => renameRoot.SetActive(false));
+
+            renameRoot.SetActive(false);
+        }
+
+        private Button CreateRenameButton(DefaultControls.Resources resources, Font font, string label, Vector2 min, Vector2 max)
+        {
+            GameObject go = DefaultControls.CreateButton(resources);
+            go.name = "Rename_" + label;
+            go.transform.SetParent(renameRoot.transform, false);
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = min;
+            rt.anchorMax = max;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+            Image bg = go.GetComponent<Image>();
+            WardrobeThemeFactory.ApplyGlassPanel(bg);
+            Text t = go.GetComponentInChildren<Text>();
+            if (t != null)
+            {
+                t.font = font;
+                t.text = label;
+                t.fontSize = 18;
+                t.color = WardrobeThemeFactory.TextMain;
+            }
+            if (go.GetComponent<UIButtonFeedback>() == null) go.AddComponent<UIButtonFeedback>();
+            return go.GetComponent<Button>();
+        }
+
+        private void OpenRenameDialog()
+        {
+            if (renameRoot == null || presetDropdown == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null || list.Count == 0) return;
+            int idx = Mathf.Clamp(presetDropdown.value, 0, list.Count - 1);
+            PhotoModePresetData p = list[idx];
+            if (renameInput != null) renameInput.text = p != null ? (p.name ?? "") : "";
+            renameRoot.SetActive(true);
+            if (renameInput != null) renameInput.ActivateInputField();
+        }
+
+        private void ConfirmRename()
+        {
+            if (SaveManager.Instance == null || SaveManager.Instance.CurrentData == null) return;
+            List<PhotoModePresetData> list = GetPresetList();
+            if (list == null || list.Count == 0) return;
+            int idx = Mathf.Clamp(SaveManager.Instance.CurrentData.selectedPhotoPresetIndex, 0, list.Count - 1);
+            string name = renameInput != null ? renameInput.text : "";
+            if (string.IsNullOrEmpty(name)) name = "预设 " + (idx + 1);
+            if (list[idx] == null) list[idx] = new PhotoModePresetData { hasValue = true, name = name };
+            list[idx].name = name;
+            SaveManager.Instance.SaveData();
+            RefreshPresetOptionsFromSave();
+            if (renameRoot != null) renameRoot.SetActive(false);
         }
     }
 }
