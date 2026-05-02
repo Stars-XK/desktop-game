@@ -27,12 +27,77 @@ namespace DesktopPet.UI
         private Quaternion desiredRot;
         private float baseYaw;
         private float baseDistance;
+        private float baseFov;
+        private bool photoModeActive;
+        private bool originalBreathing;
+        private float originalDistance;
+        private float originalPitch;
+        private Vector3 originalTargetOffset;
 
         private void Awake()
         {
             if (cam == null) cam = Camera.main;
             baseYaw = yaw;
             baseDistance = distance;
+            baseFov = cam != null ? cam.fieldOfView : 60f;
+        }
+
+        public void SetPhotoModeActive(bool active)
+        {
+            if (photoModeActive == active) return;
+            photoModeActive = active;
+            if (cam == null) cam = Camera.main;
+
+            if (active)
+            {
+                originalBreathing = enableBreathing;
+                originalDistance = distance;
+                originalPitch = pitch;
+                originalTargetOffset = targetOffset;
+                enableBreathing = false;
+            }
+            else
+            {
+                enableBreathing = originalBreathing;
+                distance = originalDistance;
+                pitch = originalPitch;
+                targetOffset = originalTargetOffset;
+            }
+        }
+
+        public void ApplyFramingPreset(int preset)
+        {
+            if (preset == 0)
+            {
+                distance = 3.6f;
+                pitch = 8f;
+                targetOffset = new Vector3(0f, 1.10f, 0f);
+            }
+            else if (preset == 1)
+            {
+                distance = 2.6f;
+                pitch = 10f;
+                targetOffset = new Vector3(0f, 1.22f, 0f);
+            }
+            else
+            {
+                distance = 1.95f;
+                pitch = 12f;
+                targetOffset = new Vector3(0f, 1.32f, 0f);
+            }
+            distance = Mathf.Clamp(distance, minDistance, maxDistance);
+            pitch = Mathf.Clamp(pitch, pitchMin, pitchMax);
+            baseDistance = distance;
+        }
+
+        public void ApplyLensPreset(int preset)
+        {
+            if (cam == null) cam = Camera.main;
+            if (cam == null) return;
+
+            float targetFov = preset == 0 ? 58f : (preset == 1 ? 44f : 28f);
+            cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFov, 0.65f);
+            baseFov = cam.fieldOfView;
         }
 
         private void Update()
